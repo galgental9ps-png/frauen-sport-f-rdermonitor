@@ -1,211 +1,370 @@
-import fs from 'node:fs/promises';
-import path from 'node:path';
-import crypto from 'node:crypto';
+import fs from "node:fs/promises";
 
-const root = process.cwd();
-const dataDir = path.join(root, 'public', 'data');
-const now = new Date();
+const SOURCES_PATH = "public/data/sources.json";
+const ITEMS_PATH = "public/data/items.json";
+const BRIEFING_PATH = "public/data/briefing.json";
 
-const KEYWORDS = [
-  'Frauen Sport Förderung',
-  'Mädchen Sportverein Förderung',
-  'Frauen im Sport Gleichstellung',
-  'Trainerinnen Mentoring Sportverein',
-  'Bayern Sportverein Frauen Förderung',
-  'Augsburg Frauen Sport Förderung',
-  'Förderprogramm Frauen Mädchen Sport',
-  'Geschlechtergerechtigkeit Sport DOSB',
-  'BLSV Frauen im Sport',
-  'EU gender equality sport funding'
+const IMPORTANT_WORDS = [
+  "frauen",
+  "mädchen",
+  "maedchen",
+  "gleichstellung",
+  "geschlechtergerechtigkeit",
+  "förderung",
+  "foerderung",
+  "fördermittel",
+  "foerdermittel",
+  "zuschuss",
+  "projekt",
+  "sport",
+  "sportverein",
+  "verein",
+  "trainerin",
+  "trainerinnen",
+  "übungsleiterin",
+  "uebungsleiterin",
+  "ehrenamt",
+  "führung",
+  "fuehrung",
+  "bayern",
+  "augsburg",
+  "integration",
+  "inklusion",
+  "teillhabe",
+  "gewaltschutz",
+  "safe sport",
+  "prävention",
+  "praevention",
+  "frist",
+  "antrag",
+  "bewerbung",
+  "ausschreibung",
+  "call"
 ];
 
-const PRIORITY_TERMS = {
-  high: ['förderung', 'förderprogramm', 'zuschuss', 'frist', 'antrag', 'sportverein', 'verein', 'mädchen', 'frauen', 'trainerinnen', 'gleichstellung', 'bayern', 'augsburg', 'dosb', 'blsv'],
-  medium: ['ehrenamt', 'führung', 'mentoring', 'safe sport', 'prävention', 'integration', 'inklusion', 'gesundheit', 'bildung', 'projekt'],
-  local: ['augsburg', 'bayern', 'schwaben', 'münchen', 'blsv']
-};
-
-const CATEGORY_RULES = [
-  ['Fördermittel', ['förder', 'zuschuss', 'grant', 'funding', 'erasmus', 'cerv', 'antrag', 'frist']],
-  ['Sport & Gleichstellung', ['sport', 'dosb', 'blsv', 'trainerin', 'athletin', 'verein']],
-  ['Gleichstellungspolitik', ['gleichstellung', 'gender', 'frauenpolitik', 'teilhabe']],
-  ['Lokal', ['augsburg', 'schwaben']],
-  ['Bayern', ['bayern', 'bayerisch', 'blsv']],
-  ['EU-Förderung', ['eu', 'european', 'erasmus', 'cerv']]
+const HIGH_PRIORITY_WORDS = [
+  "fördermittel",
+  "foerdermittel",
+  "zuschuss",
+  "frist",
+  "antrag",
+  "ausschreibung",
+  "augsburg",
+  "bayern",
+  "sportverein",
+  "mädchen",
+  "maedchen",
+  "frauen im sport",
+  "trainerinnen"
 ];
 
-function clean(text = '') {
-  return String(text).replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/\s+/g, ' ').trim();
+function normalize(text = "") {
+  return text
+    .toString()
+    .replace(/\s+/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&quot;/g, "\"")
+    .replace(/&#039;/g, "'")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .trim();
 }
 
-function hash(input) {
-  return crypto.createHash('sha1').update(input).digest('hex').slice(0, 16);
+function stripHtml(html = "") {
+  return normalize(
+    html
+      .replace(/<script[\s\S]*?<\/script>/gi, " ")
+      .replace(/<style[\s\S]*?<\/style>/gi, " ")
+      .replace(/<nav[\s\S]*?<\/nav>/gi, " ")
+      .replace(/<footer[\s\S]*?<\/footer>/gi, " ")
+      .replace(/<header[\s\S]*?<\/header>/gi, " ")
+      .replace(/<[^>]+>/g, " ")
+  );
 }
 
-function scoreFor(text, sourceWeight = 5) {
-  const t = text.toLowerCase();
-  let score = 20 + sourceWeight * 3;
-  for (const term of PRIORITY_TERMS.high) if (t.includes(term)) score += 6;
-  for (const term of PRIORITY_TERMS.medium) if (t.includes(term)) score += 3;
-  for (const term of PRIORITY_TERMS.local) if (t.includes(term)) score += 6;
-  if (/\b(frist|deadline|bewerbung|antrag|ausschreibung)\b/i.test(text)) score += 8;
-  if (/\b(2026|2027|aktuell|neu|startet|gestartet)\b/i.test(text)) score += 4;
-  return Math.max(35, Math.min(99, Math.round(score)));
+function extractTitle(html, fallback) {
+  const og = html.match(/<meta[^>]+property=["']og:title["'][^>]+content=["']([^"']+)["']/i);
+  if (og?.[1]) return normalize(og[1]);
+
+  const title = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
+  if (title?.[1]) return normalize(stripHtml(title[1]));
+
+  const h1 = html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i);
+  if (h1?.[1]) return normalize(stripHtml(h1[1]));
+
+  return fallback;
 }
 
-function categoryFor(text) {
-  const t = text.toLowerCase();
-  for (const [cat, terms] of CATEGORY_RULES) {
-    if (terms.some(term => t.includes(term))) return cat;
-  }
-  return 'Strategie';
+function extractDescription(html, fallback) {
+  const meta =
+    html.match(/<meta[^>]+name=["']description["'][^>]+content=["']([^"']+)["']/i) ||
+    html.match(/<meta[^>]+property=["']og:description["'][^>]+content=["']([^"']+)["']/i);
+
+  if (meta?.[1]) return normalize(meta[1]);
+
+  const text = stripHtml(html);
+  const sentences = text.split(/(?<=[.!?])\s+/).filter(Boolean);
+  return normalize(sentences.slice(0, 3).join(" ")) || fallback;
 }
 
-function regionFor(text) {
-  const t = text.toLowerCase();
-  if (t.includes('augsburg')) return 'Augsburg';
-  if (t.includes('bayern') || t.includes('bayer') || t.includes('blsv')) return 'Bayern';
-  if (t.includes('eu ') || t.includes('european') || t.includes('erasmus') || t.includes('cerv')) return 'EU';
-  return 'Deutschland';
-}
-
-function tagsFor(text) {
-  const tags = [];
-  const map = [
-    ['Frauen', /frauen|woman|women/i],
-    ['Mädchen', /mädchen|girls/i],
-    ['Sportverein', /sportverein|verein/i],
-    ['Förderung', /förder|zuschuss|funding|grant/i],
-    ['Bayern', /bayern|bayer/i],
-    ['Augsburg', /augsburg/i],
-    ['Trainerinnen', /trainerin|trainerinnen/i],
-    ['Gleichstellung', /gleichstellung|gender/i],
-    ['Führung', /führung|leadership/i],
-    ['Integration', /integration|inklusion|migration/i],
-    ['Safe Sport', /safe sport|schutz|prävention/i]
-  ];
-  for (const [tag, rx] of map) if (rx.test(text)) tags.push(tag);
-  return [...new Set(tags)].slice(0, 8);
-}
-
-function itemFromRaw(raw) {
-  const combined = `${raw.title} ${raw.summary} ${raw.sourceName}`;
-  const score = scoreFor(combined, raw.weight || 5);
-  return {
-    id: hash(raw.url || raw.title),
-    title: clean(raw.title).slice(0, 180),
-    summary: clean(raw.summary || 'Keine Zusammenfassung verfügbar. Originalquelle öffnen und prüfen.').slice(0, 420),
-    category: raw.category || categoryFor(combined),
-    region: raw.region || regionFor(combined),
-    sourceName: raw.sourceName || 'Online-Quelle',
-    sourceUrl: raw.url,
-    publishedAt: raw.publishedAt || now.toISOString(),
-    relevanceScore: score,
-    impact: impactFor(combined, score),
-    recommendedAction: actionFor(combined, score),
-    tags: tagsFor(combined)
-  };
-}
-
-function impactFor(text, score) {
-  const t = text.toLowerCase();
-  if (t.includes('förder') || t.includes('zuschuss') || t.includes('funding') || t.includes('grant')) return 'Potenzielle Förderchance oder Finanzierungsinformation für Projekte im Verein.';
-  if (t.includes('augsburg') || t.includes('bayern') || t.includes('blsv')) return 'Regionaler Bezug erhöht die praktische Relevanz für einen Sportverein in Augsburg/Bayern.';
-  if (t.includes('trainer') || t.includes('führung') || t.includes('leadership')) return 'Nutzbar für Programme zu Trainerinnen, Ehrenamt und Frauen in Führungspositionen.';
-  if (score >= 80) return 'Hohe strategische Relevanz für Frauenförderung, Gleichstellung oder Projektentwicklung im Sportverein.';
-  return 'Als Hintergrundinformation beobachten und bei passendem Projektkontext erneut prüfen.';
-}
-
-function actionFor(text, score) {
-  const t = text.toLowerCase();
-  if (t.includes('frist') || t.includes('deadline') || t.includes('ausschreibung')) return 'Frist und Antragsberechtigung sofort prüfen; bei Passung Vorstand oder Geschäftsführung informieren.';
-  if (t.includes('förder') || t.includes('zuschuss') || t.includes('funding')) return 'Förderfähigkeit, Eigenmittel, Zielgruppe und mögliche Projektidee prüfen.';
-  if (t.includes('augsburg') || t.includes('bayern')) return 'Für lokale Kooperation, Vorstandsvorlage oder Vereinsentwicklung prüfen.';
-  if (score >= 85) return 'In das nächste Wochenbriefing aufnehmen und konkrete Umsetzungsidee ableiten.';
-  return 'Speichern, beobachten und bei thematischer Passung als Argumentationsquelle nutzen.';
-}
-
-async function fetchGdelt(query) {
-  const url = `https://api.gdeltproject.org/api/v2/doc/doc?query=${encodeURIComponent(query)}&mode=ArtList&format=json&maxrecords=25&sort=HybridRel&timespan=30d`;
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 12000);
+function absoluteUrl(baseUrl, href) {
   try {
-    const res = await fetch(url, { signal: controller.signal, headers: { 'user-agent': 'frauen-sport-foerdermonitor/1.0' } });
-    if (!res.ok) return [];
-    const json = await res.json();
-    return (json.articles || []).map(a => itemFromRaw({
-      title: a.title,
-      summary: a.seendate ? `Aktueller Online-Treffer zum Suchbegriff „${query}“. Quelle öffnen, um Details und Originalkontext zu prüfen.` : '',
-      sourceName: a.domain || 'GDELT News',
-      url: a.url,
-      publishedAt: a.seendate ? parseGdeltDate(a.seendate) : now.toISOString(),
-      weight: 5
-    }));
+    return new URL(href, baseUrl).toString();
   } catch {
-    return [];
-  } finally {
-    clearTimeout(timer);
+    return null;
   }
 }
 
-function parseGdeltDate(value) {
-  // GDELT: YYYYMMDDHHMMSS
-  const s = String(value);
-  if (s.length >= 8) return new Date(`${s.slice(0,4)}-${s.slice(4,6)}-${s.slice(6,8)}T00:00:00Z`).toISOString();
-  return now.toISOString();
+function extractLinks(html, baseUrl) {
+  const links = [];
+  const regex = /<a[^>]+href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi;
+  let match;
+
+  while ((match = regex.exec(html)) !== null) {
+    const href = match[1];
+    const label = normalize(stripHtml(match[2]));
+
+    if (!href || !label || label.length < 8) continue;
+    if (href.startsWith("#")) continue;
+    if (href.startsWith("mailto:")) continue;
+    if (href.startsWith("tel:")) continue;
+
+    const url = absoluteUrl(baseUrl, href);
+    if (!url) continue;
+
+    links.push({ title: label, url });
+  }
+
+  const unique = new Map();
+  for (const link of links) {
+    if (!unique.has(link.url)) unique.set(link.url, link);
+  }
+
+  return Array.from(unique.values()).slice(0, 80);
+}
+
+function scoreText(text, source = {}) {
+  const lower = text.toLowerCase();
+  let score = source.priority || 40;
+
+  for (const word of IMPORTANT_WORDS) {
+    if (lower.includes(word.toLowerCase())) score += 3;
+  }
+
+  for (const word of HIGH_PRIORITY_WORDS) {
+    if (lower.includes(word.toLowerCase())) score += 7;
+  }
+
+  if (lower.includes("augsburg")) score += 14;
+  if (lower.includes("bayern")) score += 10;
+  if (lower.includes("förder") || lower.includes("foerder")) score += 12;
+  if (lower.includes("frist") || lower.includes("antrag")) score += 12;
+  if (lower.includes("sportverein") || lower.includes("verein")) score += 10;
+  if (lower.includes("frauen") || lower.includes("mädchen") || lower.includes("maedchen")) score += 12;
+
+  return Math.max(30, Math.min(100, score));
+}
+
+function categoryFromText(text, source = {}) {
+  const lower = text.toLowerCase();
+
+  if (lower.includes("förder") || lower.includes("foerder") || lower.includes("zuschuss") || lower.includes("antrag")) {
+    return "Fördermittel";
+  }
+
+  if (lower.includes("augsburg")) return "Augsburg";
+  if (lower.includes("bayern") || source.region === "Bayern") return "Bayern";
+  if (lower.includes("mädchen") || lower.includes("maedchen")) return "Mädchen im Sport";
+  if (lower.includes("frauen")) return "Frauen im Sport";
+  if (lower.includes("inklusion")) return "Inklusion";
+  if (lower.includes("integration")) return "Integration";
+  if (lower.includes("ehrenamt")) return "Ehrenamt";
+  if (lower.includes("gleichstellung")) return "Gleichstellung";
+
+  return source.type || "Info";
+}
+
+function recommendation(score, category, text) {
+  const lower = text.toLowerCase();
+
+  if (score >= 90) {
+    return "Sofort prüfen: Diese Information ist sehr relevant für Frauenförderung, Sportverein oder Fördermöglichkeiten.";
+  }
+
+  if (category === "Fördermittel") {
+    return "Förderfähigkeit prüfen: Diese Quelle kann für Projektanträge, Zuschüsse oder Fristen wichtig sein.";
+  }
+
+  if (lower.includes("augsburg")) {
+    return "Lokal relevant: Für den Verein in Augsburg genauer prüfen und ggf. Ansprechpartner kontaktieren.";
+  }
+
+  if (lower.includes("bayern")) {
+    return "Für Bayern relevant: Als mögliche Grundlage für Vereinsentwicklung oder Projektplanung nutzen.";
+  }
+
+  if (lower.includes("mädchen") || lower.includes("maedchen") || lower.includes("frauen")) {
+    return "Für Projektideen nutzen: Geeignet für Mädchenförderung, Trainerinnengewinnung oder Frauen im Verein.";
+  }
+
+  return "Beobachten: Als Hintergrundinformation speichern und bei passenden Projekten erneut prüfen.";
+}
+
+function makeSummary(title, description, source) {
+  const clean = normalize(description);
+  const short = clean.length > 360 ? `${clean.slice(0, 357)}...` : clean;
+
+  return short || `Aktuelle Information aus der Quelle ${source.name}. Diese Quelle ist für Frauenförderung, Sport, Gleichstellung oder Fördermittel relevant.`;
+}
+
+async function fetchHtml(url) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 12000);
+
+  try {
+    const response = await fetch(url, {
+      signal: controller.signal,
+      headers: {
+        "User-Agent": "FrauenSport-Foerdermonitor/1.0 (+https://github.com/galgental9ps-png/frauen-sport-f-rdermonitor)",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+
+    return await response.text();
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+async function buildItemFromUrl(source, url, fallbackTitle = null) {
+  try {
+    const html = await fetchHtml(url);
+    const title = extractTitle(html, fallbackTitle || source.name);
+    const description = extractDescription(html, source.description || "");
+    const combined = `${title} ${description} ${(source.keywords || []).join(" ")}`;
+
+    const score = scoreText(combined, source);
+    const category = categoryFromText(combined, source);
+
+    return {
+      id: Buffer.from(url).toString("base64url").slice(0, 18),
+      title,
+      sourceName: source.name,
+      sourceType: source.type || "Quelle",
+      region: source.region || "Deutschland",
+      category,
+      url,
+      score,
+      summary: makeSummary(title, description, source),
+      recommendation: recommendation(score, category, combined),
+      keywords: source.keywords || [],
+      checkedAt: new Date().toISOString()
+    };
+  } catch (error) {
+    const combined = `${source.name} ${source.description || ""} ${(source.keywords || []).join(" ")}`;
+    const score = scoreText(combined, source);
+    const category = categoryFromText(combined, source);
+
+    return {
+      id: Buffer.from(url).toString("base64url").slice(0, 18),
+      title: fallbackTitle || source.name,
+      sourceName: source.name,
+      sourceType: source.type || "Quelle",
+      region: source.region || "Deutschland",
+      category,
+      url,
+      score,
+      summary: source.description || "Diese Quelle konnte nicht vollständig automatisch gelesen werden. Der Link bleibt als wichtige Beobachtungsquelle gespeichert.",
+      recommendation: "Quelle manuell prüfen: Die Webseite blockiert eventuell automatische Abfragen oder liefert keine gut lesbaren Artikeldaten.",
+      keywords: source.keywords || [],
+      checkedAt: new Date().toISOString(),
+      warning: error.message
+    };
+  }
 }
 
 async function main() {
-  await fs.mkdir(dataDir, { recursive: true });
-  const sources = JSON.parse(await fs.readFile(path.join(dataDir, 'sources.json'), 'utf8'));
-  const seed = JSON.parse(await fs.readFile(path.join(dataDir, 'items.json'), 'utf8')).filter(i => String(i.id).startsWith('seed'));
+  await fs.mkdir("public/data", { recursive: true });
 
-  const gdeltItems = [];
-  for (const query of KEYWORDS) {
-    const rows = await fetchGdelt(query);
-    gdeltItems.push(...rows);
+  const raw = await fs.readFile(SOURCES_PATH, "utf8");
+  const sources = JSON.parse(raw);
+
+  const items = [];
+
+  for (const source of sources) {
+    console.log(`Prüfe Quelle: ${source.name}`);
+
+    let sourceHtml = null;
+
+    try {
+      sourceHtml = await fetchHtml(source.url);
+    } catch {
+      sourceHtml = null;
+    }
+
+    const mainItem = await buildItemFromUrl(source, source.url, source.name);
+    items.push(mainItem);
+
+    if (sourceHtml) {
+      const links = extractLinks(sourceHtml, source.url);
+
+      const relevantLinks = links
+        .map((link) => {
+          const text = `${link.title} ${link.url} ${(source.keywords || []).join(" ")}`;
+          return {
+            ...link,
+            score: scoreText(text, source)
+          };
+        })
+        .filter((link) => link.score >= 70)
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 4);
+
+      for (const link of relevantLinks) {
+        const item = await buildItemFromUrl(source, link.url, link.title);
+        items.push(item);
+      }
+    }
   }
 
-  const sourceCards = sources.map(s => itemFromRaw({
-    title: `Kernquelle beobachten: ${s.name}`,
-    summary: `Regelmäßig prüfen: ${s.keywords.join(', ')}. Diese Quelle ist in der App als strategische Anlaufstelle hinterlegt.`,
-    sourceName: s.name,
-    url: s.url,
-    category: s.category,
-    region: s.region,
-    weight: s.weight,
-    publishedAt: now.toISOString()
-  }));
-
-  const all = [...gdeltItems, ...sourceCards, ...seed];
-  const dedup = new Map();
-  for (const item of all) {
-    if (!item.sourceUrl) continue;
-    const key = item.sourceUrl.replace(/[?#].*$/, '').toLowerCase();
-    const existing = dedup.get(key);
-    if (!existing || item.relevanceScore > existing.relevanceScore) dedup.set(key, item);
+  const unique = new Map();
+  for (const item of items) {
+    if (!unique.has(item.url)) unique.set(item.url, item);
   }
 
-  const finalItems = [...dedup.values()]
-    .sort((a, b) => Number(b.relevanceScore || 0) - Number(a.relevanceScore || 0) || new Date(b.publishedAt) - new Date(a.publishedAt))
-    .slice(0, 120);
+  const sortedItems = Array.from(unique.values())
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 80);
 
-  const top = finalItems.slice(0, 6);
+  const topItems = sortedItems.slice(0, 8);
+
   const briefing = {
-    generatedAt: now.toISOString(),
-    title: 'Wochenbriefing Frauen, Sport & Förderung',
-    summary: top.length
-      ? `Aktuell höchste Priorität: ${top[0].title}. Insgesamt wurden ${finalItems.length} relevante Treffer und Kernquellen bewertet.`
-      : 'Keine neuen Treffer gefunden; Kernquellen manuell prüfen.',
-    topActions: top.slice(0, 5).map(item => `${item.title}: ${item.recommendedAction}`)
+    updatedAt: new Date().toISOString(),
+    title: "Wochenbriefing Frauen, Sport & Förderung",
+    intro: "Automatisch erzeugtes Briefing aus den wichtigsten Quellen für Frauenförderung, Frauensport, Gleichstellung, Fördermittel und Vereinsentwicklung.",
+    highlights: topItems.map((item) => ({
+      title: item.title,
+      sourceName: item.sourceName,
+      category: item.category,
+      region: item.region,
+      score: item.score,
+      summary: item.summary,
+      recommendation: item.recommendation,
+      url: item.url
+    }))
   };
 
-  await fs.writeFile(path.join(dataDir, 'items.json'), JSON.stringify(finalItems, null, 2));
-  await fs.writeFile(path.join(dataDir, 'briefing.json'), JSON.stringify(briefing, null, 2));
-  console.log(`Wrote ${finalItems.length} items.`);
+  await fs.writeFile(ITEMS_PATH, JSON.stringify(sortedItems, null, 2), "utf8");
+  await fs.writeFile(BRIEFING_PATH, JSON.stringify(briefing, null, 2), "utf8");
+
+  console.log(`Fertig. ${sortedItems.length} Einträge geschrieben.`);
 }
 
-main().catch(err => {
-  console.error(err);
+main().catch((error) => {
+  console.error(error);
   process.exit(1);
 });

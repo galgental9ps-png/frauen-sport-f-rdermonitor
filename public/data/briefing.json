@@ -1,12 +1,87 @@
 {
-  "generatedAt": "2026-06-12T19:05:02.187Z",
+  "updatedAt": "2026-06-12T19:16:19.515Z",
   "title": "Wochenbriefing Frauen, Sport & Förderung",
-  "summary": "Aktuell höchste Priorität: Startpunkt: Frauen und Mädchen im Sportverein strategisch fördern. Insgesamt wurden 8 relevante Treffer und Kernquellen bewertet.",
-  "topActions": [
-    "Startpunkt: Frauen und Mädchen im Sportverein strategisch fördern: Quellen prüfen, erste Projektidee auswählen und Fördermittel-Radar beobachten.",
-    "Fördermittel-Radar aktivieren: Bund, Bayern, EU und Stiftungen beobachten: Wöchentlich die Kategorie Fördermittel öffnen und Einträge mit Score über 80 prüfen.",
-    "Projektidee: Mädchen bleiben im Verein: Als Vorstandsvorlage vorbereiten und passende Förderung suchen.",
-    "Kernquelle beobachten: Stadt Augsburg - Gleichstellung: Förderfähigkeit, Eigenmittel, Zielgruppe und mögliche Projektidee prüfen.",
-    "Kernquelle beobachten: Bayerisches Sozialministerium - Gleichstellung: Förderfähigkeit, Eigenmittel, Zielgruppe und mögliche Projektidee prüfen."
+  "intro": "Automatisch erzeugtes Briefing aus den wichtigsten Quellen für Frauenförderung, Frauensport, Gleichstellung, Fördermittel und Vereinsentwicklung.",
+  "highlights": [
+    {
+      "title": "Konferenz für Frauen, Vielfalt und Geschlechtergleichstellung",
+      "sourceName": "DOSB - Geschlechtergerechtigkeit",
+      "category": "Fördermittel",
+      "region": "Deutschland",
+      "score": 100,
+      "summary": "Konferenz für Frauen, Vielfalt und Geschlechtergleichstellung Zum Inhalt springen Vereine & Verbände Athlet*innen Stellenangebote Newsletter Navigation aufklappen Vorlesen Konferenz für Frauen, Vielfalt und Geschlechtergleichstellung Die jährlich stattfindende Konferenz für Frauen, Vielfalt und Geschlechtergleichstellung (ehemals Frauen-Vollversammlung) i...",
+      "recommendation": "Sofort prüfen: Diese Information ist sehr relevant für Frauenförderung, Sportverein oder Fördermöglichkeiten.",
+      "url": "https://www.dosb.de/themen/mensch-und-sportverein/geschlechtergerechtigkeit-im-sport/konferenz-fuer-frauen-vielfalt-und-geschlechtergleichstellung"
+    },
+    {
+      "title": "Frauen im Sport - Wir sind mehr",
+      "sourceName": "BLSV - Frauen im Sport",
+      "category": "Bayern",
+      "region": "Bayern",
+      "score": 100,
+      "summary": "Der Verbandsfrauenbeirat ist die Vertretung der Frauen im BLSV und ist verantwortlich für die Belange der Frauen im Sport in Bayern.",
+      "recommendation": "Sofort prüfen: Diese Information ist sehr relevant für Frauenförderung, Sportverein oder Fördermöglichkeiten.",
+      "url": "https://www.blsv.de/startseite/produkte/sport-und-sozialangebote/frauen-im-sport/"
+    },
+    {
+      "title": "Über uns: Informationen über den Bayerischen Landes-Sportverband",
+      "sourceName": "BLSV - Frauen im Sport",
+      "category": "Bayern",
+      "region": "Bayern",
+      "score": 100,
+      "summary": "Der BLSV ist die Dachorganisation des organisierten Sports in Bayern. Auf dieser Seite können Sie sich über unseren Verband informieren.",
+      "recommendation": "Sofort prüfen: Diese Information ist sehr relevant für Frauenförderung, Sportverein oder Fördermöglichkeiten.",
+      "url": "https://www.blsv.de/startseite/ueber-uns/"
+    },
+    {
+      "title": "Online Übersicht: Amtliche Mitteilungen des BLSV und der BSJ",
+      "sourceName": "BLSV - Frauen im Sport",
+      "category": "Bayern",
+      "region": "Bayern",
+      "score": 100,
+      "summary": "Informationen zu Mitgliedschaftsverhältnisse und wichtigen Gremien-, Beirats- und Ausschusssitzungen des BLSV und der BSJ.",
+      "recommendation": "Sofort prüfen: Diese Information ist sehr relevant für Frauenförderung, Sportverein oder Fördermöglichkeiten.",
+      "url": "https://www.blsv.de/startseite/ueber-uns/amtliche-mitteilungen/"
+    },
+    {
+      "title": "Übersicht der bayerischen Anschlussorganisationen im BLSV",
+      "sourceName": "BLSV - Frauen im Sport",
+      "category": "Fördermittel",
+      "region": "Bayern",
+      "score": 100,
+      "summary": "Anschlussorganisationen können die Einrichtungen des BLSV nutzen, erhalten Beratungsleistungen des BLSV und ggf. eine staatliche Förderung.",
+      "recommendation": "Sofort prüfen: Diese Information ist sehr relevant für Frauenförderung, Sportverein oder Fördermöglichkeiten.",
+      "url": "https://www.blsv.de/startseite/ueber-uns/anschlussorganisationen/"
+    },
+    {
+      "title": "Über uns: Die Ausschüsse und Kommissionen im BLSV",
+      "sourceName": "BLSV - Frauen im Sport",
+      "category": "Bayern",
+      "region": "Bayern",
+      "score": 100,
+      "summary": "Die Ausschüsse und Kommissionen des BLSV setzten sich mit spezifischen Themen auseinander und entwickeln Zielvorgaben im BLSV.",
+      "recommendation": "Sofort prüfen: Diese Information ist sehr relevant für Frauenförderung, Sportverein oder Fördermöglichkeiten.",
+      "url": "https://www.blsv.de/startseite/ueber-uns/ausschuesse-und-kommissionen/"
+    },
+    {
+      "title": "Stadt Augsburg",
+      "sourceName": "Stadt Augsburg - Gleichstellung",
+      "category": "Fördermittel",
+      "region": "Augsburg",
+      "score": 100,
+      "summary": "Auf ihrer offiziellen Website bietet die Stadt Informationen zu Politik, Verwaltung, Daseinsvorsorge Wirtschaft, Kultur und Freizeit an.",
+      "recommendation": "Sofort prüfen: Diese Information ist sehr relevant für Frauenförderung, Sportverein oder Fördermöglichkeiten.",
+      "url": "https://www.augsburg.de/"
+    },
+    {
+      "title": "Stadt Augsburg",
+      "sourceName": "Stadt Augsburg - Gleichstellung",
+      "category": "Fördermittel",
+      "region": "Augsburg",
+      "score": 100,
+      "summary": "Informationen der Stadt Augsburg in Leichter Sprache. Wir erklären wichtige Themen, Angebote und Services. Einfach und verständlich für alle.",
+      "recommendation": "Sofort prüfen: Diese Information ist sehr relevant für Frauenförderung, Sportverein oder Fördermöglichkeiten.",
+      "url": "https://www.augsburg.de/leichte-sprache-startseite"
+    }
   ]
 }

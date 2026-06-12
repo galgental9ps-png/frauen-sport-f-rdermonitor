@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "GitHub-Pages Webapp für Monitoring zu Frauenförderung, Sport, Fördermitteln und Gleichstellung.",
   "scripts": {
     "dev": "vite",
     "build": "vite build",

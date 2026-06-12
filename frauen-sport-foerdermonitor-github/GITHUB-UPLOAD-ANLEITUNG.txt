@@ -1,0 +1,35 @@
+SO LÄDST DU DIE APP AUF GITHUB HOCH
+
+1. GitHub öffnen und neues Repository erstellen
+   Beispielname: frauen-sport-foerdermonitor
+
+2. Alle Dateien aus diesem Ordner in GitHub hochladen
+   Wichtig: Nicht nur den src-Ordner hochladen, sondern alles.
+
+3. In GitHub auf Settings klicken
+
+4. Links auf Pages klicken
+
+5. Bei Build and deployment einstellen:
+   Source: GitHub Actions
+
+6. Links auf Actions klicken
+
+7. Workflow öffnen:
+   Update data and deploy GitHub Pages
+
+8. Run workflow klicken
+
+9. Nach dem erfolgreichen Lauf bekommst du eine Webadresse.
+   Diese Webadresse kannst du deiner Chefin schicken.
+
+IPHONE:
+Die Webadresse in Safari öffnen.
+Dann: Teilen → Zum Home-Bildschirm.
+Dann ist sie wie eine App auf dem iPhone.
+
+WICHTIG:
+Diese Version läuft nur mit GitHub Pages und GitHub Actions.
+Kein Firebase nötig.
+Kein Server nötig.
+Keine Terminal-Befehle nötig, wenn du direkt über GitHub hochlädst.

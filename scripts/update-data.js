@@ -4,234 +4,454 @@ const SOURCES_PATH = "public/data/sources.json";
 const ITEMS_PATH = "public/data/items.json";
 const BRIEFING_PATH = "public/data/briefing.json";
 
-const IMPORTANT_WORDS = [
-  "frauen",
-  "mädchen",
-  "maedchen",
-  "gleichstellung",
-  "geschlechtergerechtigkeit",
-  "förderung",
-  "foerderung",
-  "fördermittel",
-  "foerdermittel",
-  "zuschuss",
-  "projekt",
-  "sport",
-  "sportverein",
-  "verein",
-  "trainerin",
-  "trainerinnen",
-  "übungsleiterin",
-  "uebungsleiterin",
-  "ehrenamt",
-  "führung",
-  "fuehrung",
-  "bayern",
-  "augsburg",
-  "integration",
-  "inklusion",
-  "teillhabe",
-  "gewaltschutz",
-  "safe sport",
-  "prävention",
-  "praevention",
-  "frist",
-  "antrag",
-  "bewerbung",
-  "ausschreibung",
-  "call"
+const MAX_LINKS_PER_SOURCE = 3;
+const MAX_ITEMS_TOTAL = 120;
+const FETCH_TIMEOUT_MS = 10000;
+
+const POSITIVE_TERMS = [
+  "frauen", "frau", "mädchen", "maedchen", "girls", "women",
+  "sport", "sportverein", "verein", "vereine", "breitensport",
+  "gleichstellung", "geschlechtergerechtigkeit", "chancengleichheit",
+  "förderung", "foerderung", "fördermittel", "foerdermittel", "zuschuss",
+  "projekt", "projektförderung", "projektfoerderung", "ausschreibung",
+  "antrag", "frist", "deadline", "call", "bewerbung",
+  "trainerin", "trainerinnen", "übungsleiterin", "uebungsleiterin",
+  "führung", "fuehrung", "vorstand", "ehrenamt", "engagement",
+  "bayern", "augsburg", "schwaben", "kommunal", "stadt",
+  "integration", "inklusion", "teilhabe", "migration",
+  "gewaltschutz", "prävention", "praevention", "safe sport",
+  "gesundheit", "bildung", "jugend", "kinder"
 ];
 
-const HIGH_PRIORITY_WORDS = [
-  "fördermittel",
-  "foerdermittel",
-  "zuschuss",
-  "frist",
-  "antrag",
-  "ausschreibung",
-  "augsburg",
-  "bayern",
-  "sportverein",
-  "mädchen",
-  "maedchen",
-  "frauen im sport",
-  "trainerinnen"
+const HIGH_VALUE_TERMS = [
+  "fördermittel", "foerdermittel", "zuschuss", "ausschreibung",
+  "antrag", "frist", "deadline", "bewerbung", "call",
+  "frauen im sport", "mädchen im sport", "maedchen im sport",
+  "trainerinnen", "sportverein", "vereinspauschale",
+  "augsburg", "bayern", "blsv", "dosb", "erasmus+", "cerv"
 ];
 
-function normalize(text = "") {
-  return text
-    .toString()
-    .replace(/\s+/g, " ")
+const NEGATIVE_LINK_TERMS = [
+  "impressum", "datenschutz", "privacy", "cookie", "cookies",
+  "kontakt", "login", "anmelden", "registrieren", "newsletter",
+  "presse", "jobs", "karriere", "stellenangebote", "sitemap",
+  "barrierefreiheit", "leichte sprache", "gebärdensprache",
+  "gebaerdensprache", "vorlesen", "teilen", "facebook", "instagram",
+  "linkedin", "youtube", "twitter", "x.com", "rss"
+];
+
+const PROJECT_IDEAS = [
+  {
+    title: "Mädchen bleiben im Verein",
+    bullets: [
+      "Drop-out von Mädchen senken",
+      "Trainerinnen als Vorbilder einsetzen",
+      "sichere Trainingszeiten schaffen",
+      "Elternkommunikation verbessern"
+    ]
+  },
+  {
+    title: "Trainerinnen gewinnen",
+    bullets: [
+      "junge Frauen für Übungsleiterinnen-Ausbildung ansprechen",
+      "Mentoring durch erfahrene Trainerinnen",
+      "Kostenübernahme über Fördermittel prüfen",
+      "Sichtbarkeit weiblicher Vorbilder erhöhen"
+    ]
+  },
+  {
+    title: "Frauen in Führung",
+    bullets: [
+      "Vorstands-Nachwuchs fördern",
+      "Qualifizierung und Coaching anbieten",
+      "Frauen gezielt für Gremien ansprechen",
+      "familienfreundliche Sitzungszeiten prüfen"
+    ]
+  },
+  {
+    title: "Sport für Frauen mit wenig Zugang",
+    bullets: [
+      "niedrige Teilnahmehürden schaffen",
+      "Kinderbetreuung prüfen",
+      "Kooperation mit Stadt und sozialen Trägern",
+      "Integration, Gesundheit und Teilhabe verbinden"
+    ]
+  },
+  {
+    title: "Sicherer Sport für Mädchen und Frauen",
+    bullets: [
+      "Schutzkonzept prüfen",
+      "Ansprechpersonen sichtbar machen",
+      "Safe-Sport-Schulungen anbieten",
+      "Prävention gegen Diskriminierung und Gewalt stärken"
+    ]
+  }
+];
+
+function cleanText(value = "") {
+  return String(value)
     .replace(/&amp;/g, "&")
     .replace(/&quot;/g, "\"")
+    .replace(/&#034;/g, "\"")
     .replace(/&#039;/g, "'")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
+    .replace(/&apos;/g, "'")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&uuml;/g, "ü")
+    .replace(/&auml;/g, "ä")
+    .replace(/&ouml;/g, "ö")
+    .replace(/&Uuml;/g, "Ü")
+    .replace(/&Auml;/g, "Ä")
+    .replace(/&Ouml;/g, "Ö")
+    .replace(/&szlig;/g, "ß")
+    .replace(/\s+/g, " ")
     .trim();
 }
 
 function stripHtml(html = "") {
-  return normalize(
+  return cleanText(
     html
       .replace(/<script[\s\S]*?<\/script>/gi, " ")
       .replace(/<style[\s\S]*?<\/style>/gi, " ")
+      .replace(/<noscript[\s\S]*?<\/noscript>/gi, " ")
+      .replace(/<svg[\s\S]*?<\/svg>/gi, " ")
       .replace(/<nav[\s\S]*?<\/nav>/gi, " ")
       .replace(/<footer[\s\S]*?<\/footer>/gi, " ")
       .replace(/<header[\s\S]*?<\/header>/gi, " ")
+      .replace(/<aside[\s\S]*?<\/aside>/gi, " ")
+      .replace(/<!--[\s\S]*?-->/g, " ")
       .replace(/<[^>]+>/g, " ")
   );
 }
 
-function extractTitle(html, fallback) {
-  const og = html.match(/<meta[^>]+property=["']og:title["'][^>]+content=["']([^"']+)["']/i);
-  if (og?.[1]) return normalize(og[1]);
-
-  const title = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
-  if (title?.[1]) return normalize(stripHtml(title[1]));
-
-  const h1 = html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i);
-  if (h1?.[1]) return normalize(stripHtml(h1[1]));
-
-  return fallback;
-}
-
-function extractDescription(html, fallback) {
-  const meta =
-    html.match(/<meta[^>]+name=["']description["'][^>]+content=["']([^"']+)["']/i) ||
-    html.match(/<meta[^>]+property=["']og:description["'][^>]+content=["']([^"']+)["']/i);
-
-  if (meta?.[1]) return normalize(meta[1]);
-
-  const text = stripHtml(html);
-  const sentences = text.split(/(?<=[.!?])\s+/).filter(Boolean);
-  return normalize(sentences.slice(0, 3).join(" ")) || fallback;
-}
-
-function absoluteUrl(baseUrl, href) {
+function normalizeUrl(baseUrl, href) {
   try {
-    return new URL(href, baseUrl).toString();
+    if (!href) return null;
+
+    const trimmed = href.trim();
+
+    if (
+      trimmed.startsWith("#") ||
+      trimmed.startsWith("mailto:") ||
+      trimmed.startsWith("tel:") ||
+      trimmed.startsWith("javascript:") ||
+      trimmed.startsWith("data:")
+    ) {
+      return null;
+    }
+
+    const url = new URL(trimmed, baseUrl);
+    if (!["http:", "https:"].includes(url.protocol)) return null;
+
+    url.hash = "";
+    return url.toString();
   } catch {
     return null;
   }
 }
 
-function extractLinks(html, baseUrl) {
-  const links = [];
-  const regex = /<a[^>]+href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi;
-  let match;
+function getMeta(html, key) {
+  const tags = html.match(/<meta\b[^>]*>/gi) || [];
 
-  while ((match = regex.exec(html)) !== null) {
-    const href = match[1];
-    const label = normalize(stripHtml(match[2]));
+  for (const tag of tags) {
+    const lower = tag.toLowerCase();
 
-    if (!href || !label || label.length < 8) continue;
-    if (href.startsWith("#")) continue;
-    if (href.startsWith("mailto:")) continue;
-    if (href.startsWith("tel:")) continue;
+    if (!lower.includes(key.toLowerCase())) continue;
 
-    const url = absoluteUrl(baseUrl, href);
-    if (!url) continue;
+    const content =
+      tag.match(/\bcontent=["']([^"']+)["']/i) ||
+      tag.match(/\bcontent=([^ >]+)/i);
 
-    links.push({ title: label, url });
+    if (content?.[1]) return cleanText(content[1]);
   }
 
-  const unique = new Map();
-  for (const link of links) {
-    if (!unique.has(link.url)) unique.set(link.url, link);
+  return "";
+}
+
+function extractTitle(html, fallback = "Ohne Titel") {
+  const ogTitle = getMeta(html, "og:title");
+  if (ogTitle) return ogTitle;
+
+  const twitterTitle = getMeta(html, "twitter:title");
+  if (twitterTitle) return twitterTitle;
+
+  const h1 = html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i);
+  if (h1?.[1]) return stripHtml(h1[1]);
+
+  const title = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
+  if (title?.[1]) {
+    return stripHtml(title[1])
+      .replace(/\s+\|\s+.*$/, "")
+      .replace(/\s+-\s+.*$/, "")
+      .trim();
   }
 
-  return Array.from(unique.values()).slice(0, 80);
+  return fallback;
+}
+
+function extractDescription(html) {
+  const og = getMeta(html, "og:description");
+  if (og) return og;
+
+  const twitter = getMeta(html, "twitter:description");
+  if (twitter) return twitter;
+
+  const description = getMeta(html, "description");
+  if (description) return description;
+
+  return "";
+}
+
+function removeBoilerplate(text) {
+  return cleanText(
+    text
+      .replace(/Zum Inhalt springen/gi, " ")
+      .replace(/Navigation aufklappen/gi, " ")
+      .replace(/Vorlesen/gi, " ")
+      .replace(/Leichte Sprache/gi, " ")
+      .replace(/Gebärdensprache/gi, " ")
+      .replace(/Suche öffnen/gi, " ")
+      .replace(/Newsletter/gi, " ")
+      .replace(/Cookie[s]?/gi, " ")
+      .replace(/Datenschutz/gi, " ")
+  );
+}
+
+function extractReadableText(html) {
+  const main =
+    html.match(/<main[^>]*>([\s\S]*?)<\/main>/i)?.[1] ||
+    html.match(/<article[^>]*>([\s\S]*?)<\/article>/i)?.[1] ||
+    html.match(/<body[^>]*>([\s\S]*?)<\/body>/i)?.[1] ||
+    html;
+
+  return removeBoilerplate(stripHtml(main));
+}
+
+function splitSentences(text) {
+  return cleanText(text)
+    .split(/(?<=[.!?])\s+/)
+    .map((s) => cleanText(s))
+    .filter((s) => s.length >= 40 && s.length <= 320);
+}
+
+function termHits(text, terms) {
+  const lower = text.toLowerCase();
+  return terms.reduce((count, term) => {
+    return lower.includes(term.toLowerCase()) ? count + 1 : count;
+  }, 0);
 }
 
 function scoreText(text, source = {}) {
   const lower = text.toLowerCase();
-  let score = source.priority || 40;
 
-  for (const word of IMPORTANT_WORDS) {
-    if (lower.includes(word.toLowerCase())) score += 3;
-  }
+  let score = Number(source.priority || 50);
 
-  for (const word of HIGH_PRIORITY_WORDS) {
-    if (lower.includes(word.toLowerCase())) score += 7;
-  }
+  score += termHits(lower, POSITIVE_TERMS) * 3;
+  score += termHits(lower, HIGH_VALUE_TERMS) * 8;
 
-  if (lower.includes("augsburg")) score += 14;
-  if (lower.includes("bayern")) score += 10;
-  if (lower.includes("förder") || lower.includes("foerder")) score += 12;
-  if (lower.includes("frist") || lower.includes("antrag")) score += 12;
-  if (lower.includes("sportverein") || lower.includes("verein")) score += 10;
-  if (lower.includes("frauen") || lower.includes("mädchen") || lower.includes("maedchen")) score += 12;
+  if (lower.includes("augsburg")) score += 18;
+  if (lower.includes("bayern")) score += 12;
+  if (lower.includes("sportverein")) score += 15;
+  if (lower.includes("frauen") || lower.includes("mädchen") || lower.includes("maedchen")) score += 15;
+  if (lower.includes("förder") || lower.includes("foerder") || lower.includes("zuschuss")) score += 16;
+  if (lower.includes("frist") || lower.includes("deadline") || lower.includes("antrag")) score += 15;
 
-  return Math.max(30, Math.min(100, score));
+  if (termHits(lower, NEGATIVE_LINK_TERMS) >= 2) score -= 35;
+  if (lower.includes("impressum") || lower.includes("datenschutz")) score -= 70;
+  if (lower.includes("barrierefreiheitserklärung")) score -= 70;
+  if (lower.includes("leichte sprache")) score -= 35;
+
+  return Math.max(0, Math.min(100, Math.round(score)));
 }
 
 function categoryFromText(text, source = {}) {
   const lower = text.toLowerCase();
 
-  if (lower.includes("förder") || lower.includes("foerder") || lower.includes("zuschuss") || lower.includes("antrag")) {
+  if (lower.includes("förder") || lower.includes("foerder") || lower.includes("zuschuss") || lower.includes("antrag") || lower.includes("frist")) {
     return "Fördermittel";
   }
 
   if (lower.includes("augsburg")) return "Augsburg";
   if (lower.includes("bayern") || source.region === "Bayern") return "Bayern";
   if (lower.includes("mädchen") || lower.includes("maedchen")) return "Mädchen im Sport";
+  if (lower.includes("trainerin") || lower.includes("trainerinnen")) return "Trainerinnen";
   if (lower.includes("frauen")) return "Frauen im Sport";
+  if (lower.includes("gleichstellung") || lower.includes("geschlechtergerechtigkeit")) return "Gleichstellung";
   if (lower.includes("inklusion")) return "Inklusion";
   if (lower.includes("integration")) return "Integration";
-  if (lower.includes("ehrenamt")) return "Ehrenamt";
-  if (lower.includes("gleichstellung")) return "Gleichstellung";
+  if (lower.includes("ehrenamt") || lower.includes("engagement")) return "Ehrenamt";
+  if (lower.includes("safe sport") || lower.includes("gewaltschutz") || lower.includes("prävention")) return "Schutz & Prävention";
 
   return source.type || "Info";
 }
 
-function recommendation(score, category, text) {
+function urgencyFromScore(score, text) {
   const lower = text.toLowerCase();
 
-  if (score >= 90) {
-    return "Sofort prüfen: Diese Information ist sehr relevant für Frauenförderung, Sportverein oder Fördermöglichkeiten.";
+  if (lower.includes("frist") || lower.includes("deadline") || lower.includes("bewerbung") || lower.includes("antrag")) {
+    return "Sofort prüfen";
+  }
+
+  if (score >= 90) return "Sehr wichtig";
+  if (score >= 75) return "Wichtig";
+  if (score >= 55) return "Beobachten";
+  return "Hintergrund";
+}
+
+function createRecommendation(score, category, text) {
+  const lower = text.toLowerCase();
+
+  if (lower.includes("frist") || lower.includes("deadline") || lower.includes("antrag")) {
+    return "Frist und Förderfähigkeit sofort prüfen. Falls der Verein antragsberechtigt ist, Thema für Geschäftsführung oder Vorstand vorbereiten.";
   }
 
   if (category === "Fördermittel") {
-    return "Förderfähigkeit prüfen: Diese Quelle kann für Projektanträge, Zuschüsse oder Fristen wichtig sein.";
+    return "Förderchance prüfen: Passt möglicherweise für Projekte zu Mädchen, Frauen, Teilhabe, Ehrenamt oder Sportverein.";
   }
 
   if (lower.includes("augsburg")) {
-    return "Lokal relevant: Für den Verein in Augsburg genauer prüfen und ggf. Ansprechpartner kontaktieren.";
+    return "Lokal relevant: Für den Verein in Augsburg prüfen und mögliche Ansprechpartner bei Stadt, Sportamt oder Gleichstellungsstelle notieren.";
   }
 
-  if (lower.includes("bayern")) {
-    return "Für Bayern relevant: Als mögliche Grundlage für Vereinsentwicklung oder Projektplanung nutzen.";
+  if (lower.includes("bayern") || lower.includes("blsv")) {
+    return "Für Bayern relevant: Als Grundlage für Vereinsentwicklung, Projektplanung oder BLSV-bezogene Maßnahmen prüfen.";
   }
 
-  if (lower.includes("mädchen") || lower.includes("maedchen") || lower.includes("frauen")) {
-    return "Für Projektideen nutzen: Geeignet für Mädchenförderung, Trainerinnengewinnung oder Frauen im Verein.";
+  if (lower.includes("trainerin") || lower.includes("trainerinnen")) {
+    return "Für Projektidee nutzen: Trainerinnen gewinnen, qualifizieren und als Vorbilder im Verein sichtbar machen.";
+  }
+
+  if (lower.includes("mädchen") || lower.includes("maedchen")) {
+    return "Für Mädchenförderung nutzen: Prüfen, ob daraus ein Vereinsprojekt gegen Drop-out oder für mehr Teilhabe entstehen kann.";
+  }
+
+  if (lower.includes("frauen")) {
+    return "Für Frauenförderung nutzen: Als Impuls für Angebote, Führung, Ehrenamt oder Öffentlichkeitsarbeit im Verein prüfen.";
+  }
+
+  if (score >= 85) {
+    return "Intern bewerten: Thema ist relevant und sollte für Strategie, Projektideen oder Förderung geprüft werden.";
   }
 
   return "Beobachten: Als Hintergrundinformation speichern und bei passenden Projekten erneut prüfen.";
 }
 
-function makeSummary(title, description, source) {
-  const clean = normalize(description);
-  const short = clean.length > 360 ? `${clean.slice(0, 357)}...` : clean;
+function createImpact(score, category, text) {
+  const lower = text.toLowerCase();
 
-  return short || `Aktuelle Information aus der Quelle ${source.name}. Diese Quelle ist für Frauenförderung, Sport, Gleichstellung oder Fördermittel relevant.`;
+  if (category === "Fördermittel") {
+    return "Kann helfen, neue Projektmittel, Zuschüsse oder Förderchancen für den Verein zu finden.";
+  }
+
+  if (lower.includes("augsburg")) {
+    return "Hoher lokaler Mehrwert, weil der Bezug zu Augsburg direkte Handlungsmöglichkeiten eröffnen kann.";
+  }
+
+  if (lower.includes("bayern") || lower.includes("blsv")) {
+    return "Wichtig für Sportvereine in Bayern und mögliche Maßnahmen über BLSV, Land oder Kommune.";
+  }
+
+  if (lower.includes("mädchen") || lower.includes("maedchen")) {
+    return "Kann konkrete Projekte für Mädchen im Sport, Mitgliederbindung und sichere Teilnahme unterstützen.";
+  }
+
+  if (lower.includes("frauen")) {
+    return "Kann die Frauenförderung, Sichtbarkeit und Beteiligung im Verein stärken.";
+  }
+
+  if (score >= 80) {
+    return "Strategisch relevant für Vereinsentwicklung, Gleichstellung oder gesellschaftliches Engagement.";
+  }
+
+  return "Einordnung als Hintergrundinformation. Relevanz im Einzelfall prüfen.";
+}
+
+function createSummary(title, metaDescription, readableText, source) {
+  const sentences = splitSentences(readableText);
+
+  const ranked = sentences
+    .map((sentence) => ({
+      sentence,
+      score: scoreText(`${title} ${sentence} ${(source.keywords || []).join(" ")}`, source)
+    }))
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 2)
+    .map((entry) => entry.sentence);
+
+  let summary = "";
+
+  if (metaDescription && metaDescription.length > 60) {
+    summary = metaDescription;
+  } else if (ranked.length > 0) {
+    summary = ranked.join(" ");
+  } else if (source.description) {
+    summary = source.description;
+  } else {
+    summary = "Diese Quelle wurde als relevant für Frauenförderung, Sport, Gleichstellung oder Fördermittel erkannt.";
+  }
+
+  summary = cleanText(summary);
+  return summary.length > 520 ? `${summary.slice(0, 517)}...` : summary;
+}
+
+function extractLinks(html, baseUrl, source) {
+  const links = [];
+  const regex = /<a\b[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi;
+  let match;
+
+  while ((match = regex.exec(html)) !== null) {
+    const rawHref = match[1];
+    const label = stripHtml(match[2]);
+    const url = normalizeUrl(baseUrl, rawHref);
+
+    if (!url || !label || label.length < 8) continue;
+
+    const combined = `${label} ${url} ${(source.keywords || []).join(" ")}`;
+    const score = scoreText(combined, source);
+
+    if (score < 55) continue;
+    if (termHits(combined, NEGATIVE_LINK_TERMS) >= 2) continue;
+
+    links.push({
+      title: cleanText(label).slice(0, 160),
+      url,
+      score
+    });
+  }
+
+  const unique = new Map();
+
+  for (const link of links) {
+    if (!unique.has(link.url)) {
+      unique.set(link.url, link);
+    }
+  }
+
+  return Array.from(unique.values())
+    .sort((a, b) => b.score - a.score)
+    .slice(0, MAX_LINKS_PER_SOURCE);
 }
 
 async function fetchHtml(url) {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 12000);
+  const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
 
   try {
     const response = await fetch(url, {
       signal: controller.signal,
       headers: {
-        "User-Agent": "FrauenSport-Foerdermonitor/1.0 (+https://github.com/galgental9ps-png/frauen-sport-f-rdermonitor)",
+        "User-Agent": "Mozilla/5.0 FrauenSport-Foerdermonitor/1.0",
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
       }
     });
 
+    const contentType = response.headers.get("content-type") || "";
+
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}`);
+    }
+
+    if (!contentType.includes("text/html") && !contentType.includes("application/xhtml")) {
+      throw new Error(`Kein HTML: ${contentType || "unbekannter Inhaltstyp"}`);
     }
 
     return await response.text();
@@ -240,128 +460,198 @@ async function fetchHtml(url) {
   }
 }
 
-async function buildItemFromUrl(source, url, fallbackTitle = null) {
+function makeId(url) {
+  return Buffer.from(url).toString("base64url").slice(0, 22);
+}
+
+function makeCompatibleItem({
+  title,
+  source,
+  url,
+  category,
+  score,
+  summary,
+  recommendation,
+  impact,
+  warning = null
+}) {
+  const checkedAt = new Date().toISOString();
+  const urgency = urgencyFromScore(score, `${title} ${summary} ${recommendation}`);
+
+  return {
+    id: makeId(url),
+
+    title,
+    headline: title,
+
+    source: source.name,
+    sourceName: source.name,
+    sourceLabel: source.name,
+    sourceType: source.type || "Quelle",
+
+    url,
+    link: url,
+    href: url,
+    sourceUrl: url,
+    originalUrl: url,
+
+    region: source.region || "Deutschland",
+    category,
+    type: category,
+
+    score,
+    relevanceScore: score,
+    relevance: score,
+    urgency,
+
+    summary,
+    description: summary,
+    excerpt: summary,
+
+    recommendation,
+    recommendedAction: recommendation,
+    action: recommendation,
+
+    impact,
+    benefit: impact,
+    value: impact,
+
+    keywords: source.keywords || [],
+    tags: source.keywords || [],
+
+    checkedAt,
+    updatedAt: checkedAt,
+    publishedAt: checkedAt,
+
+    warning
+  };
+}
+
+async function buildItem(source, url, fallbackTitle = null) {
   try {
     const html = await fetchHtml(url);
-    const title = extractTitle(html, fallbackTitle || source.name);
-    const description = extractDescription(html, source.description || "");
-    const combined = `${title} ${description} ${(source.keywords || []).join(" ")}`;
+
+    const title = cleanText(extractTitle(html, fallbackTitle || source.name));
+    const metaDescription = extractDescription(html);
+    const readableText = extractReadableText(html);
+
+    const combined = `${title} ${metaDescription} ${readableText.slice(0, 2500)} ${(source.keywords || []).join(" ")}`;
 
     const score = scoreText(combined, source);
     const category = categoryFromText(combined, source);
+    const summary = createSummary(title, metaDescription, readableText, source);
+    const recommendation = createRecommendation(score, category, combined);
+    const impact = createImpact(score, category, combined);
 
-    return {
-      id: Buffer.from(url).toString("base64url").slice(0, 18),
+    return makeCompatibleItem({
       title,
-      sourceName: source.name,
-      sourceType: source.type || "Quelle",
-      region: source.region || "Deutschland",
-      category,
+      source,
       url,
+      category,
       score,
-      summary: makeSummary(title, description, source),
-      recommendation: recommendation(score, category, combined),
-      keywords: source.keywords || [],
-      checkedAt: new Date().toISOString()
-    };
+      summary,
+      recommendation,
+      impact
+    });
   } catch (error) {
-    const combined = `${source.name} ${source.description || ""} ${(source.keywords || []).join(" ")}`;
+    const combined = `${fallbackTitle || source.name} ${source.description || ""} ${(source.keywords || []).join(" ")}`;
     const score = scoreText(combined, source);
     const category = categoryFromText(combined, source);
+    const title = fallbackTitle || source.name;
 
-    return {
-      id: Buffer.from(url).toString("base64url").slice(0, 18),
-      title: fallbackTitle || source.name,
-      sourceName: source.name,
-      sourceType: source.type || "Quelle",
-      region: source.region || "Deutschland",
-      category,
+    return makeCompatibleItem({
+      title,
+      source,
       url,
+      category,
       score,
-      summary: source.description || "Diese Quelle konnte nicht vollständig automatisch gelesen werden. Der Link bleibt als wichtige Beobachtungsquelle gespeichert.",
-      recommendation: "Quelle manuell prüfen: Die Webseite blockiert eventuell automatische Abfragen oder liefert keine gut lesbaren Artikeldaten.",
-      keywords: source.keywords || [],
-      checkedAt: new Date().toISOString(),
+      summary:
+        source.description ||
+        "Diese Quelle konnte nicht vollständig automatisch gelesen werden. Sie bleibt trotzdem im Monitor, weil sie fachlich relevant ist.",
+      recommendation:
+        "Quelle manuell öffnen und prüfen. Die Webseite blockiert eventuell automatische Abfragen oder liefert keine gut lesbaren Metadaten.",
+      impact:
+        "Die Quelle bleibt als Beobachtungsquelle wichtig, sollte aber bei Bedarf direkt geöffnet werden.",
       warning: error.message
-    };
+    });
   }
 }
 
 async function main() {
   await fs.mkdir("public/data", { recursive: true });
 
-  const raw = await fs.readFile(SOURCES_PATH, "utf8");
-  const sources = JSON.parse(raw);
+  const rawSources = await fs.readFile(SOURCES_PATH, "utf8");
+  const sources = JSON.parse(rawSources);
 
   const items = [];
 
   for (const source of sources) {
+    if (!source?.url || !source?.name) continue;
+
     console.log(`Prüfe Quelle: ${source.name}`);
 
-    let sourceHtml = null;
+    const sourceUrl = normalizeUrl(source.url, source.url);
+    if (!sourceUrl) continue;
 
-    try {
-      sourceHtml = await fetchHtml(source.url);
-    } catch {
-      sourceHtml = null;
-    }
-
-    const mainItem = await buildItemFromUrl(source, source.url, source.name);
+    const mainItem = await buildItem(source, sourceUrl, source.name);
     items.push(mainItem);
 
-    if (sourceHtml) {
-      const links = extractLinks(sourceHtml, source.url);
+    try {
+      const html = await fetchHtml(sourceUrl);
+      const links = extractLinks(html, sourceUrl, source);
 
-      const relevantLinks = links
-        .map((link) => {
-          const text = `${link.title} ${link.url} ${(source.keywords || []).join(" ")}`;
-          return {
-            ...link,
-            score: scoreText(text, source)
-          };
-        })
-        .filter((link) => link.score >= 70)
-        .sort((a, b) => b.score - a.score)
-        .slice(0, 4);
-
-      for (const link of relevantLinks) {
-        const item = await buildItemFromUrl(source, link.url, link.title);
-        items.push(item);
+      for (const link of links) {
+        const item = await buildItem(source, link.url, link.title);
+        if (item.score >= 50) {
+          items.push(item);
+        }
       }
+    } catch (error) {
+      console.log(`Links konnten nicht gelesen werden: ${source.name} (${error.message})`);
     }
   }
 
   const unique = new Map();
+
   for (const item of items) {
-    if (!unique.has(item.url)) unique.set(item.url, item);
+    if (!item.url || item.url.startsWith("javascript:")) continue;
+    if (!unique.has(item.url)) {
+      unique.set(item.url, item);
+    }
   }
 
   const sortedItems = Array.from(unique.values())
     .sort((a, b) => b.score - a.score)
-    .slice(0, 80);
+    .slice(0, MAX_ITEMS_TOTAL);
 
-  const topItems = sortedItems.slice(0, 8);
+  const topItems = sortedItems.slice(0, 10);
 
   const briefing = {
     updatedAt: new Date().toISOString(),
-    title: "Wochenbriefing Frauen, Sport & Förderung",
-    intro: "Automatisch erzeugtes Briefing aus den wichtigsten Quellen für Frauenförderung, Frauensport, Gleichstellung, Fördermittel und Vereinsentwicklung.",
+    title: "Briefing Frauen, Sport & Förderung",
+    intro:
+      "Automatisch erzeugtes Briefing aus öffentlichen Quellen zu Frauenförderung, Frauensport, Gleichstellung, Fördermitteln und Vereinsentwicklung.",
     highlights: topItems.map((item) => ({
       title: item.title,
+      source: item.source,
       sourceName: item.sourceName,
+      sourceUrl: item.sourceUrl,
+      url: item.url,
       category: item.category,
       region: item.region,
       score: item.score,
+      urgency: item.urgency,
       summary: item.summary,
       recommendation: item.recommendation,
-      url: item.url
-    }))
+      impact: item.impact
+    })),
+    projectIdeas: PROJECT_IDEAS
   };
 
   await fs.writeFile(ITEMS_PATH, JSON.stringify(sortedItems, null, 2), "utf8");
   await fs.writeFile(BRIEFING_PATH, JSON.stringify(briefing, null, 2), "utf8");
 
-  console.log(`Fertig. ${sortedItems.length} Einträge geschrieben.`);
+  console.log(`Fertig. ${sortedItems.length} Dashboard-Einträge geschrieben.`);
 }
 
 main().catch((error) => {

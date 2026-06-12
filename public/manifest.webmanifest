@@ -1,9 +1,0 @@
-{
-  "name": "Frauen Sport Fördermonitor",
-  "short_name": "Fördermonitor",
-  "start_url": ".",
-  "display": "standalone",
-  "background_color": "#f8fafc",
-  "theme_color": "#6d28d9",
-  "icons": []
-}

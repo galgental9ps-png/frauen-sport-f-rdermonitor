@@ -4,86 +4,236 @@ const SOURCES_PATH = "public/data/sources.json";
 const ITEMS_PATH = "public/data/items.json";
 const BRIEFING_PATH = "public/data/briefing.json";
 
-const MAX_LINKS_PER_SOURCE = 3;
+const MAX_LINKS_PER_SOURCE = 4;
 const MAX_ITEMS_TOTAL = 120;
-const FETCH_TIMEOUT_MS = 10000;
+const FETCH_TIMEOUT_MS = 12000;
 
-const POSITIVE_TERMS = [
-  "frauen", "frau", "mädchen", "maedchen", "girls", "women",
-  "sport", "sportverein", "verein", "vereine", "breitensport",
-  "gleichstellung", "geschlechtergerechtigkeit", "chancengleichheit",
-  "förderung", "foerderung", "fördermittel", "foerdermittel", "zuschuss",
-  "projekt", "projektförderung", "projektfoerderung", "ausschreibung",
-  "antrag", "frist", "deadline", "call", "bewerbung",
-  "trainerin", "trainerinnen", "übungsleiterin", "uebungsleiterin",
-  "führung", "fuehrung", "vorstand", "ehrenamt", "engagement",
-  "bayern", "augsburg", "schwaben", "kommunal", "stadt",
-  "integration", "inklusion", "teilhabe", "migration",
-  "gewaltschutz", "prävention", "praevention", "safe sport",
-  "gesundheit", "bildung", "jugend", "kinder"
+const CORE_WOMEN_TERMS = [
+  "frauen",
+  "frau",
+  "mädchen",
+  "maedchen",
+  "girls",
+  "women",
+  "trainerin",
+  "trainerinnen",
+  "übungsleiterin",
+  "uebungsleiterin",
+  "vorständin",
+  "mentorinnen",
+  "frauenförderung",
+  "frauenfoerderung",
+  "mädchenförderung",
+  "maedchenfoerderung",
+  "frauen im sport",
+  "mädchen im sport",
+  "maedchen im sport"
 ];
 
-const HIGH_VALUE_TERMS = [
-  "fördermittel", "foerdermittel", "zuschuss", "ausschreibung",
-  "antrag", "frist", "deadline", "bewerbung", "call",
-  "frauen im sport", "mädchen im sport", "maedchen im sport",
-  "trainerinnen", "sportverein", "vereinspauschale",
-  "augsburg", "bayern", "blsv", "dosb", "erasmus+", "cerv"
+const SPORT_TERMS = [
+  "sport",
+  "sportverein",
+  "sportvereine",
+  "verein",
+  "vereine",
+  "breitensport",
+  "vereinssport",
+  "training",
+  "trainer",
+  "trainerinnen",
+  "übungsleiter",
+  "uebungsleiter",
+  "sportstätte",
+  "sportstaette",
+  "sportstätten",
+  "sportstaetten",
+  "blsv",
+  "dosb",
+  "landessportbund"
 ];
 
-const NEGATIVE_LINK_TERMS = [
-  "impressum", "datenschutz", "privacy", "cookie", "cookies",
-  "kontakt", "login", "anmelden", "registrieren", "newsletter",
-  "presse", "jobs", "karriere", "stellenangebote", "sitemap",
-  "barrierefreiheit", "leichte sprache", "gebärdensprache",
-  "gebaerdensprache", "vorlesen", "teilen", "facebook", "instagram",
-  "linkedin", "youtube", "twitter", "x.com", "rss"
+const FUNDING_TERMS = [
+  "fördermittel",
+  "foerdermittel",
+  "förderprogramm",
+  "foerderprogramm",
+  "förderung",
+  "foerderung",
+  "zuschuss",
+  "zuwendung",
+  "projektförderung",
+  "projektfoerderung",
+  "mikroförderung",
+  "mikrofoerderung",
+  "förderfähig",
+  "foerderfaehig",
+  "antragsberechtigt",
+  "antragstellung",
+  "antrag stellen",
+  "beantragen",
+  "förderrichtlinie",
+  "foerderrichtlinie",
+  "ausschreibung",
+  "call for proposals",
+  "grant",
+  "funding",
+  "cerv",
+  "erasmus+"
+];
+
+const DEADLINE_TERMS = [
+  "frist",
+  "deadline",
+  "bewerbungsfrist",
+  "antragsfrist",
+  "einsendeschluss",
+  "bis zum",
+  "stichtag"
+];
+
+const REGION_TERMS = [
+  "augsburg",
+  "stadt augsburg",
+  "landkreis augsburg",
+  "bayern",
+  "bayerisch",
+  "schwaben",
+  "blsv"
+];
+
+const EQUALITY_TERMS = [
+  "gleichstellung",
+  "geschlechtergerechtigkeit",
+  "chancengleichheit",
+  "gleichberechtigung",
+  "diversität",
+  "diversitaet",
+  "teilhabe",
+  "diskriminierung",
+  "antidiskriminierung",
+  "inklusion",
+  "integration",
+  "migration",
+  "gewaltschutz",
+  "safe sport",
+  "prävention",
+  "praevention",
+  "schutzkonzept"
+];
+
+const ACTION_TERMS = [
+  "projekt",
+  "programm",
+  "initiative",
+  "maßnahme",
+  "massnahme",
+  "workshop",
+  "qualifizierung",
+  "fortbildung",
+  "mentoring",
+  "netzwerk",
+  "veranstaltung",
+  "beratung",
+  "kampagne",
+  "leitfaden",
+  "praxisbeispiel"
+];
+
+const NEGATIVE_TERMS = [
+  "impressum",
+  "datenschutz",
+  "privacy",
+  "cookie",
+  "cookies",
+  "kontakt",
+  "login",
+  "anmelden",
+  "registrieren",
+  "newsletter",
+  "pressekontakt",
+  "jobs",
+  "karriere",
+  "stellenangebote",
+  "sitemap",
+  "barrierefreiheitserklärung",
+  "barrierefreiheitserklaerung",
+  "leichte sprache",
+  "gebärdensprache",
+  "gebaerdensprache",
+  "vorlesen",
+  "teilen",
+  "facebook",
+  "instagram",
+  "linkedin",
+  "youtube",
+  "twitter",
+  "x.com"
+];
+
+const LOW_RELEVANCE_SPORT_POLITICS = [
+  "olympische spiele",
+  "paralympische spiele",
+  "olympia-bewerbung",
+  "olympiabewerbung",
+  "deutsche olympiabewerbung",
+  "leistungssport",
+  "spitzensport",
+  "nationalmannschaft",
+  "bundesliga",
+  "meisterschaft",
+  "weltmeisterschaft",
+  "europameisterschaft"
 ];
 
 const PROJECT_IDEAS = [
   {
     title: "Mädchen bleiben im Verein",
-    bullets: [
-      "Drop-out von Mädchen senken",
-      "Trainerinnen als Vorbilder einsetzen",
-      "sichere Trainingszeiten schaffen",
+    goal: "Mädchen langfristig im Verein halten und Drop-out reduzieren.",
+    actions: [
+      "Trainerinnen als Vorbilder sichtbar machen",
+      "sichere Trainingszeiten und geschützte Räume prüfen",
+      "Mädchen gezielt nach Bedürfnissen befragen",
       "Elternkommunikation verbessern"
     ]
   },
   {
     title: "Trainerinnen gewinnen",
-    bullets: [
-      "junge Frauen für Übungsleiterinnen-Ausbildung ansprechen",
-      "Mentoring durch erfahrene Trainerinnen",
-      "Kostenübernahme über Fördermittel prüfen",
-      "Sichtbarkeit weiblicher Vorbilder erhöhen"
+    goal: "Mehr Frauen als Übungsleiterinnen, Trainerinnen und Betreuerinnen gewinnen.",
+    actions: [
+      "junge Frauen direkt ansprechen",
+      "Ausbildungskosten und Fördermöglichkeiten prüfen",
+      "Mentoring durch erfahrene Trainerinnen anbieten",
+      "weibliche Vorbilder öffentlich sichtbar machen"
     ]
   },
   {
     title: "Frauen in Führung",
-    bullets: [
-      "Vorstands-Nachwuchs fördern",
+    goal: "Frauen stärker in Vorstand, Abteilungsleitung und Projektleitung bringen.",
+    actions: [
+      "familienfreundliche Sitzungszeiten prüfen",
       "Qualifizierung und Coaching anbieten",
       "Frauen gezielt für Gremien ansprechen",
-      "familienfreundliche Sitzungszeiten prüfen"
+      "Aufgaben in kleine, machbare Rollen aufteilen"
     ]
   },
   {
     title: "Sport für Frauen mit wenig Zugang",
-    bullets: [
-      "niedrige Teilnahmehürden schaffen",
-      "Kinderbetreuung prüfen",
-      "Kooperation mit Stadt und sozialen Trägern",
+    goal: "Frauen erreichen, die bisher wenig Zugang zum Vereinssport haben.",
+    actions: [
+      "niedrigschwellige Angebote schaffen",
+      "Kinderbetreuung oder familienfreundliche Zeiten prüfen",
+      "Kooperationen mit Stadt, Schulen und sozialen Trägern starten",
       "Integration, Gesundheit und Teilhabe verbinden"
     ]
   },
   {
     title: "Sicherer Sport für Mädchen und Frauen",
-    bullets: [
-      "Schutzkonzept prüfen",
+    goal: "Schutz, Prävention und Vertrauen im Verein stärken.",
+    actions: [
+      "Schutzkonzept prüfen oder erstellen",
       "Ansprechpersonen sichtbar machen",
       "Safe-Sport-Schulungen anbieten",
-      "Prävention gegen Diskriminierung und Gewalt stärken"
+      "Diskriminierung und Gewaltprävention aktiv behandeln"
     ]
   }
 ];
@@ -140,6 +290,7 @@ function normalizeUrl(baseUrl, href) {
     }
 
     const url = new URL(trimmed, baseUrl);
+
     if (!["http:", "https:"].includes(url.protocol)) return null;
 
     url.hash = "";
@@ -213,6 +364,7 @@ function removeBoilerplate(text) {
       .replace(/Newsletter/gi, " ")
       .replace(/Cookie[s]?/gi, " ")
       .replace(/Datenschutz/gi, " ")
+      .replace(/Impressum/gi, " ")
   );
 }
 
@@ -230,35 +382,102 @@ function splitSentences(text) {
   return cleanText(text)
     .split(/(?<=[.!?])\s+/)
     .map((s) => cleanText(s))
-    .filter((s) => s.length >= 40 && s.length <= 320);
+    .filter((s) => s.length >= 45 && s.length <= 340);
 }
 
-function termHits(text, terms) {
+function countHits(text, terms) {
   const lower = text.toLowerCase();
   return terms.reduce((count, term) => {
     return lower.includes(term.toLowerCase()) ? count + 1 : count;
   }, 0);
 }
 
+function hasAny(text, terms) {
+  return countHits(text, terms) > 0;
+}
+
 function scoreText(text, source = {}) {
   const lower = text.toLowerCase();
 
-  let score = Number(source.priority || 50);
+  const womenHits = countHits(lower, CORE_WOMEN_TERMS);
+  const sportHits = countHits(lower, SPORT_TERMS);
+  const fundingHits = countHits(lower, FUNDING_TERMS);
+  const deadlineHits = countHits(lower, DEADLINE_TERMS);
+  const regionHits = countHits(lower, REGION_TERMS);
+  const equalityHits = countHits(lower, EQUALITY_TERMS);
+  const actionHits = countHits(lower, ACTION_TERMS);
+  const negativeHits = countHits(lower, NEGATIVE_TERMS);
+  const lowSportPoliticsHits = countHits(lower, LOW_RELEVANCE_SPORT_POLITICS);
 
-  score += termHits(lower, POSITIVE_TERMS) * 3;
-  score += termHits(lower, HIGH_VALUE_TERMS) * 8;
+  let score = 15;
 
-  if (lower.includes("augsburg")) score += 18;
-  if (lower.includes("bayern")) score += 12;
-  if (lower.includes("sportverein")) score += 15;
-  if (lower.includes("frauen") || lower.includes("mädchen") || lower.includes("maedchen")) score += 15;
-  if (lower.includes("förder") || lower.includes("foerder") || lower.includes("zuschuss")) score += 16;
-  if (lower.includes("frist") || lower.includes("deadline") || lower.includes("antrag")) score += 15;
+  score += Math.min(Number(source.priority || 50), 100) * 0.25;
 
-  if (termHits(lower, NEGATIVE_LINK_TERMS) >= 2) score -= 35;
-  if (lower.includes("impressum") || lower.includes("datenschutz")) score -= 70;
-  if (lower.includes("barrierefreiheitserklärung")) score -= 70;
-  if (lower.includes("leichte sprache")) score -= 35;
+  score += womenHits * 10;
+  score += sportHits * 6;
+  score += fundingHits * 9;
+  score += deadlineHits * 8;
+  score += regionHits * 7;
+  score += equalityHits * 5;
+  score += actionHits * 4;
+
+  const hasWomen = womenHits > 0;
+  const hasSport = sportHits > 0;
+  const hasFunding = fundingHits > 0;
+  const hasDeadline = deadlineHits > 0;
+  const hasRegion = regionHits > 0;
+  const hasEquality = equalityHits > 0;
+
+  if (hasWomen && hasSport) score += 16;
+  if (hasWomen && hasFunding) score += 14;
+  if (hasSport && hasFunding) score += 12;
+  if (hasWomen && hasSport && hasFunding) score += 18;
+  if (hasWomen && hasSport && hasRegion) score += 14;
+  if (hasFunding && hasDeadline) score += 16;
+  if (hasRegion && hasFunding) score += 10;
+  if (hasEquality && hasSport) score += 7;
+
+  if (lower.includes("augsburg")) score += 12;
+  if (lower.includes("bayern") || lower.includes("blsv")) score += 9;
+  if (lower.includes("sportverein")) score += 10;
+  if (lower.includes("trainerinnen")) score += 10;
+  if (lower.includes("frauen im sport") || lower.includes("mädchen im sport") || lower.includes("maedchen im sport")) score += 14;
+
+  if (negativeHits > 0) score -= negativeHits * 18;
+
+  if (lowSportPoliticsHits > 0 && !hasWomen && !hasFunding) {
+    score -= 35;
+  }
+
+  if (lower.includes("bewerbung") && !hasFunding && !lower.includes("förder") && !lower.includes("foerder")) {
+    score -= 18;
+  }
+
+  if (!hasWomen && !hasFunding && !hasEquality) {
+    score -= 22;
+  }
+
+  if (!hasSport && !hasFunding && !hasRegion) {
+    score -= 12;
+  }
+
+  if (lower.includes("impressum") || lower.includes("datenschutz") || lower.includes("barrierefreiheitserklärung")) {
+    score = 0;
+  }
+
+  const qualifiesForTop =
+    (hasWomen && hasSport && (hasFunding || hasRegion || hasEquality)) ||
+    (hasFunding && hasSport && hasRegion) ||
+    (hasFunding && hasWomen) ||
+    (lower.includes("augsburg") && hasSport && (hasWomen || hasFunding));
+
+  if (!qualifiesForTop && score > 84) {
+    score = 84;
+  }
+
+  if (score >= 96 && !qualifiesForTop) {
+    score = 84;
+  }
 
   return Math.max(0, Math.min(100, Math.round(score)));
 }
@@ -266,20 +485,47 @@ function scoreText(text, source = {}) {
 function categoryFromText(text, source = {}) {
   const lower = text.toLowerCase();
 
-  if (lower.includes("förder") || lower.includes("foerder") || lower.includes("zuschuss") || lower.includes("antrag") || lower.includes("frist")) {
+  const hasWomen = hasAny(lower, CORE_WOMEN_TERMS);
+  const hasSport = hasAny(lower, SPORT_TERMS);
+  const hasFunding = hasAny(lower, FUNDING_TERMS);
+  const hasDeadline = hasAny(lower, DEADLINE_TERMS);
+  const hasRegion = hasAny(lower, REGION_TERMS);
+  const hasEquality = hasAny(lower, EQUALITY_TERMS);
+
+  if (hasFunding && (hasSport || hasWomen || hasRegion || hasDeadline)) {
     return "Fördermittel";
   }
 
-  if (lower.includes("augsburg")) return "Augsburg";
-  if (lower.includes("bayern") || source.region === "Bayern") return "Bayern";
-  if (lower.includes("mädchen") || lower.includes("maedchen")) return "Mädchen im Sport";
-  if (lower.includes("trainerin") || lower.includes("trainerinnen")) return "Trainerinnen";
-  if (lower.includes("frauen")) return "Frauen im Sport";
-  if (lower.includes("gleichstellung") || lower.includes("geschlechtergerechtigkeit")) return "Gleichstellung";
+  if (lower.includes("augsburg") && (hasSport || hasWomen || hasFunding || hasEquality)) {
+    return "Augsburg";
+  }
+
+  if ((lower.includes("bayern") || lower.includes("blsv")) && (hasSport || hasWomen || hasFunding)) {
+    return "Bayern";
+  }
+
+  if (lower.includes("trainerin") || lower.includes("trainerinnen") || lower.includes("übungsleiterin") || lower.includes("uebungsleiterin")) {
+    return "Trainerinnen";
+  }
+
+  if (lower.includes("mädchen") || lower.includes("maedchen")) {
+    return "Mädchen im Sport";
+  }
+
+  if (hasWomen && hasSport) {
+    return "Frauen im Sport";
+  }
+
+  if (hasEquality) {
+    return "Gleichstellung";
+  }
+
   if (lower.includes("inklusion")) return "Inklusion";
   if (lower.includes("integration")) return "Integration";
   if (lower.includes("ehrenamt") || lower.includes("engagement")) return "Ehrenamt";
-  if (lower.includes("safe sport") || lower.includes("gewaltschutz") || lower.includes("prävention")) return "Schutz & Prävention";
+  if (lower.includes("safe sport") || lower.includes("gewaltschutz") || lower.includes("prävention") || lower.includes("praevention")) {
+    return "Schutz & Prävention";
+  }
 
   return source.type || "Info";
 }
@@ -287,11 +533,13 @@ function categoryFromText(text, source = {}) {
 function urgencyFromScore(score, text) {
   const lower = text.toLowerCase();
 
-  if (lower.includes("frist") || lower.includes("deadline") || lower.includes("bewerbung") || lower.includes("antrag")) {
-    return "Sofort prüfen";
-  }
+  const hasFunding = hasAny(lower, FUNDING_TERMS);
+  const hasDeadline = hasAny(lower, DEADLINE_TERMS);
+  const hasWomen = hasAny(lower, CORE_WOMEN_TERMS);
+  const hasSport = hasAny(lower, SPORT_TERMS);
 
-  if (score >= 90) return "Sehr wichtig";
+  if (hasFunding && hasDeadline) return "Sofort prüfen";
+  if (score >= 90 && (hasWomen || hasFunding) && hasSport) return "Sehr wichtig";
   if (score >= 75) return "Wichtig";
   if (score >= 55) return "Beobachten";
   return "Hintergrund";
@@ -300,20 +548,26 @@ function urgencyFromScore(score, text) {
 function createRecommendation(score, category, text) {
   const lower = text.toLowerCase();
 
-  if (lower.includes("frist") || lower.includes("deadline") || lower.includes("antrag")) {
-    return "Frist und Förderfähigkeit sofort prüfen. Falls der Verein antragsberechtigt ist, Thema für Geschäftsführung oder Vorstand vorbereiten.";
+  const hasFunding = hasAny(lower, FUNDING_TERMS);
+  const hasDeadline = hasAny(lower, DEADLINE_TERMS);
+  const hasWomen = hasAny(lower, CORE_WOMEN_TERMS);
+  const hasSport = hasAny(lower, SPORT_TERMS);
+  const hasRegion = hasAny(lower, REGION_TERMS);
+
+  if (hasFunding && hasDeadline) {
+    return "Sofort prüfen: Förderfrist, Antragsberechtigung und mögliche Projektidee für den Verein klären.";
   }
 
-  if (category === "Fördermittel") {
-    return "Förderchance prüfen: Passt möglicherweise für Projekte zu Mädchen, Frauen, Teilhabe, Ehrenamt oder Sportverein.";
+  if (category === "Fördermittel" || hasFunding) {
+    return "Förderchance prüfen: Passt möglicherweise für Projekte zu Mädchen, Frauen, Teilhabe, Ehrenamt, Inklusion oder Sportverein.";
   }
 
-  if (lower.includes("augsburg")) {
+  if (lower.includes("augsburg") && (hasSport || hasWomen)) {
     return "Lokal relevant: Für den Verein in Augsburg prüfen und mögliche Ansprechpartner bei Stadt, Sportamt oder Gleichstellungsstelle notieren.";
   }
 
-  if (lower.includes("bayern") || lower.includes("blsv")) {
-    return "Für Bayern relevant: Als Grundlage für Vereinsentwicklung, Projektplanung oder BLSV-bezogene Maßnahmen prüfen.";
+  if ((lower.includes("bayern") || lower.includes("blsv")) && (hasSport || hasWomen)) {
+    return "Für Bayern relevant: Als Grundlage für Vereinsentwicklung, BLSV-Bezug, Mädchenförderung oder Frauenförderung im Verein prüfen.";
   }
 
   if (lower.includes("trainerin") || lower.includes("trainerinnen")) {
@@ -321,14 +575,18 @@ function createRecommendation(score, category, text) {
   }
 
   if (lower.includes("mädchen") || lower.includes("maedchen")) {
-    return "Für Mädchenförderung nutzen: Prüfen, ob daraus ein Vereinsprojekt gegen Drop-out oder für mehr Teilhabe entstehen kann.";
+    return "Für Mädchenförderung nutzen: Prüfen, ob daraus ein Projekt gegen Drop-out oder für mehr Teilhabe entstehen kann.";
   }
 
-  if (lower.includes("frauen")) {
-    return "Für Frauenförderung nutzen: Als Impuls für Angebote, Führung, Ehrenamt oder Öffentlichkeitsarbeit im Verein prüfen.";
+  if (hasWomen && hasSport) {
+    return "Für Frauen im Sport relevant: Als Impuls für Angebote, Führung, Ehrenamt oder Öffentlichkeitsarbeit im Verein prüfen.";
   }
 
-  if (score >= 85) {
+  if (hasRegion) {
+    return "Regional beobachten: Kann für Augsburg, Bayern oder lokale Kooperationen relevant werden.";
+  }
+
+  if (score >= 80) {
     return "Intern bewerten: Thema ist relevant und sollte für Strategie, Projektideen oder Förderung geprüft werden.";
   }
 
@@ -343,7 +601,7 @@ function createImpact(score, category, text) {
   }
 
   if (lower.includes("augsburg")) {
-    return "Hoher lokaler Mehrwert, weil der Bezug zu Augsburg direkte Handlungsmöglichkeiten eröffnen kann.";
+    return "Hoher lokaler Mehrwert, weil Augsburg-Bezug direkte Handlungsmöglichkeiten für Verein, Stadt oder Partner eröffnen kann.";
   }
 
   if (lower.includes("bayern") || lower.includes("blsv")) {
@@ -354,8 +612,12 @@ function createImpact(score, category, text) {
     return "Kann konkrete Projekte für Mädchen im Sport, Mitgliederbindung und sichere Teilnahme unterstützen.";
   }
 
+  if (lower.includes("trainerin") || lower.includes("trainerinnen")) {
+    return "Kann helfen, mehr weibliche Vorbilder, Übungsleiterinnen und Trainerinnen im Verein aufzubauen.";
+  }
+
   if (lower.includes("frauen")) {
-    return "Kann die Frauenförderung, Sichtbarkeit und Beteiligung im Verein stärken.";
+    return "Kann Frauenförderung, Sichtbarkeit und Beteiligung im Verein stärken.";
   }
 
   if (score >= 80) {
@@ -408,11 +670,11 @@ function extractLinks(html, baseUrl, source) {
     const combined = `${label} ${url} ${(source.keywords || []).join(" ")}`;
     const score = scoreText(combined, source);
 
-    if (score < 55) continue;
-    if (termHits(combined, NEGATIVE_LINK_TERMS) >= 2) continue;
+    if (score < 58) continue;
+    if (countHits(combined, NEGATIVE_TERMS) > 0) continue;
 
     links.push({
-      title: cleanText(label).slice(0, 160),
+      title: cleanText(label).slice(0, 170),
       url,
       score
     });
@@ -476,7 +738,8 @@ function makeCompatibleItem({
   warning = null
 }) {
   const checkedAt = new Date().toISOString();
-  const urgency = urgencyFromScore(score, `${title} ${summary} ${recommendation}`);
+  const combined = `${title} ${summary} ${recommendation}`;
+  const urgency = urgencyFromScore(score, combined);
 
   return {
     id: makeId(url),
@@ -577,6 +840,26 @@ async function buildItem(source, url, fallbackTitle = null) {
   }
 }
 
+function shouldKeepItem(item) {
+  const text = `${item.title} ${item.summary} ${item.recommendation} ${item.category}`.toLowerCase();
+
+  if (!item.url || item.url.startsWith("javascript:")) return false;
+  if (countHits(text, NEGATIVE_TERMS) > 0) return false;
+
+  const hasWomen = hasAny(text, CORE_WOMEN_TERMS);
+  const hasSport = hasAny(text, SPORT_TERMS);
+  const hasFunding = hasAny(text, FUNDING_TERMS);
+  const hasRegion = hasAny(text, REGION_TERMS);
+  const hasEquality = hasAny(text, EQUALITY_TERMS);
+
+  if (item.score >= 75) return true;
+  if (hasWomen && hasSport) return true;
+  if (hasFunding && (hasSport || hasWomen || hasRegion)) return true;
+  if (hasEquality && (hasSport || hasRegion || hasWomen)) return true;
+
+  return item.score >= 55;
+}
+
 async function main() {
   await fs.mkdir("public/data", { recursive: true });
 
@@ -594,7 +877,9 @@ async function main() {
     if (!sourceUrl) continue;
 
     const mainItem = await buildItem(source, sourceUrl, source.name);
-    items.push(mainItem);
+    if (shouldKeepItem(mainItem)) {
+      items.push(mainItem);
+    }
 
     try {
       const html = await fetchHtml(sourceUrl);
@@ -602,7 +887,8 @@ async function main() {
 
       for (const link of links) {
         const item = await buildItem(source, link.url, link.title);
-        if (item.score >= 50) {
+
+        if (shouldKeepItem(item)) {
           items.push(item);
         }
       }
@@ -615,7 +901,10 @@ async function main() {
 
   for (const item of items) {
     if (!item.url || item.url.startsWith("javascript:")) continue;
-    if (!unique.has(item.url)) {
+
+    const existing = unique.get(item.url);
+
+    if (!existing || item.score > existing.score) {
       unique.set(item.url, item);
     }
   }

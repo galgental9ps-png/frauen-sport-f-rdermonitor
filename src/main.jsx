@@ -1,190 +1,649 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { createRoot } from 'react-dom/client';
-import { Search, RefreshCw, Star, ExternalLink, CalendarDays, Lightbulb, ShieldCheck, TrendingUp, Filter, Download, BookOpen, AlertTriangle } from 'lucide-react';
-import './styles.css';
+import React, { useEffect, useMemo, useState } from "react";
+import { createRoot } from "react-dom/client";
+import "./styles.css";
 
-const DATA_BASE = import.meta.env.BASE_URL || '/';
-const categories = ['Alle', 'Fördermittel', 'Sport & Gleichstellung', 'Gleichstellungspolitik', 'EU-Förderung', 'Bayern', 'Lokal', 'Projektidee', 'Strategie'];
-const regions = ['Alle', 'Augsburg', 'Bayern', 'Deutschland', 'EU', 'Deutschland/EU', 'Augsburg/Bayern'];
+const DATA_URL = `${import.meta.env.BASE_URL}data/items.json`;
+const BRIEFING_URL = `${import.meta.env.BASE_URL}data/briefing.json`;
+
+const CATEGORY_ORDER = [
+  "Alle",
+  "Sofort wichtig",
+  "Fördermittel",
+  "Augsburg",
+  "Bayern",
+  "Frauen im Sport",
+  "Mädchen im Sport",
+  "Trainerinnen",
+  "Gleichstellung",
+  "Schutz & Prävention",
+  "Inklusion",
+  "Integration",
+  "Ehrenamt"
+];
+
+function safeText(value, fallback = "Keine Angabe") {
+  if (value === null || value === undefined) return fallback;
+  const text = String(value).trim();
+  return text || fallback;
+}
 
 function formatDate(value) {
-  if (!value) return 'unbekannt';
+  if (!value) return "unbekannt";
+
   try {
-    return new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date(value));
+    return new Intl.DateTimeFormat("de-DE", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit"
+    }).format(new Date(value));
   } catch {
-    return value;
+    return "unbekannt";
   }
 }
 
-function scoreLabel(score) {
-  if (score >= 90) return 'Sofort prüfen';
-  if (score >= 75) return 'Sehr relevant';
-  if (score >= 55) return 'Beobachten';
-  return 'Hintergrund';
+function getScore(item) {
+  return Number(item.score ?? item.relevanceScore ?? item.relevance ?? 0);
 }
 
-function normalize(text) {
-  return String(text || '').toLowerCase();
+function getSource(item) {
+  return safeText(item.source || item.sourceName || item.sourceLabel, "Quelle unbekannt");
 }
 
-function useJson(path, fallback) {
-  const [data, setData] = useState(fallback);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  const load = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await fetch(`${DATA_BASE}${path}?v=${Date.now()}`);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const json = await res.json();
-      setData(json);
-    } catch (err) {
-      setError(err.message);
-      setData(fallback);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => { load(); }, [path]);
-  return { data, loading, error, reload: load };
+function getUrl(item) {
+  return item.sourceUrl || item.url || item.link || item.href || item.originalUrl || "";
 }
 
-function App() {
-  const { data: items, loading, error, reload } = useJson('data/items.json', []);
-  const { data: sources } = useJson('data/sources.json', []);
-  const { data: briefing } = useJson('data/briefing.json', null);
-  const [query, setQuery] = useState('');
-  const [category, setCategory] = useState('Alle');
-  const [region, setRegion] = useState('Alle');
-  const [minScore, setMinScore] = useState(0);
-  const [favorites, setFavorites] = useState(() => JSON.parse(localStorage.getItem('fsm:favorites') || '[]'));
+function getSummary(item) {
+  return safeText(
+    item.summary || item.description || item.excerpt,
+    "Zu diesem Treffer liegt noch keine automatisch lesbare Kurzfassung vor."
+  );
+}
 
-  useEffect(() => {
-    localStorage.setItem('fsm:favorites', JSON.stringify(favorites));
-  }, [favorites]);
+function getRecommendation(item) {
+  return safeText(
+    item.recommendation || item.recommendedAction || item.action,
+    "Diesen Treffer prüfen und bei passendem Bezug für Vereinsentwicklung, Förderung oder Projektideen vormerken."
+  );
+}
 
-  const filtered = useMemo(() => {
-    const q = normalize(query);
-    return [...items]
-      .filter(item => category === 'Alle' || item.category === category)
-      .filter(item => region === 'Alle' || normalize(item.region).includes(normalize(region)))
-      .filter(item => Number(item.relevanceScore || 0) >= minScore)
-      .filter(item => !q || [item.title, item.summary, item.impact, item.recommendedAction, item.category, item.region, item.sourceName, ...(item.tags || [])].some(v => normalize(v).includes(q)))
-      .sort((a, b) => Number(b.relevanceScore || 0) - Number(a.relevanceScore || 0) || new Date(b.publishedAt) - new Date(a.publishedAt));
-  }, [items, query, category, region, minScore]);
+function getImpact(item) {
+  return safeText(
+    item.impact || item.benefit || item.value,
+    "Kann als Hintergrundinformation für Frauenförderung, Sportverein oder Fördermittelbeobachtung dienen."
+  );
+}
 
-  const stats = useMemo(() => ({
-    total: items.length,
-    funding: items.filter(i => i.category === 'Fördermittel').length,
-    high: items.filter(i => Number(i.relevanceScore || 0) >= 80).length,
-    favorites: favorites.length
-  }), [items, favorites]);
+function getUrgency(item) {
+  const score = getScore(item);
+  const text = `${item.urgency || ""} ${item.title || ""} ${getSummary(item)} ${getRecommendation(item)}`.toLowerCase();
 
-  const toggleFavorite = (id) => {
-    setFavorites(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
-  };
+  if (
+    text.includes("frist") ||
+    text.includes("deadline") ||
+    text.includes("antrag") ||
+    text.includes("sofort prüfen")
+  ) {
+    return "Sofort prüfen";
+  }
 
-  const exportBriefing = () => {
-    const top = filtered.slice(0, 8).map((item, idx) => `${idx + 1}. ${item.title}\nScore: ${item.relevanceScore}/100\nKategorie: ${item.category}\nRegion: ${item.region}\nKurzfassung: ${item.summary}\nAktion: ${item.recommendedAction}\nQuelle: ${item.sourceUrl}`).join('\n\n');
-    const text = `Frauen Sport Fördermonitor - Briefing\nErstellt: ${new Date().toLocaleString('de-DE')}\n\n${briefing?.summary || ''}\n\nTop-Themen:\n\n${top}`;
-    const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'frauen-sport-briefing.txt';
-    a.click();
-    URL.revokeObjectURL(url);
-  };
+  if (score >= 90) return "Sehr wichtig";
+  if (score >= 75) return "Wichtig";
+  if (score >= 55) return "Beobachten";
+  return "Hintergrund";
+}
+
+function getScoreLabel(score) {
+  if (score >= 90) return "Top-Priorität";
+  if (score >= 75) return "Wichtig";
+  if (score >= 55) return "Beobachten";
+  return "Hintergrund";
+}
+
+function getScoreClass(score) {
+  if (score >= 90) return "score-high";
+  if (score >= 75) return "score-good";
+  if (score >= 55) return "score-watch";
+  return "score-low";
+}
+
+function isFunding(item) {
+  const text = `${item.category || ""} ${item.title || ""} ${getSummary(item)} ${getRecommendation(item)}`.toLowerCase();
 
   return (
-    <div className="app">
-      <header className="hero">
-        <div className="heroText">
-          <div className="eyebrow"><ShieldCheck size={16}/> Strategischer Monitor für Vereine</div>
-          <h1>Frauen, Sport & Förderung</h1>
-          <p>Aktuelle Informationen, Förderchancen, Gleichstellungsthemen und Projektideen für Sportvereine — mit Fokus auf Augsburg, Bayern und praktische Umsetzung.</p>
-          <div className="heroActions">
-            <button onClick={reload} className="primary"><RefreshCw size={18}/> Daten neu laden</button>
-            <button onClick={exportBriefing} className="secondary"><Download size={18}/> Briefing exportieren</button>
+    text.includes("förder") ||
+    text.includes("foerder") ||
+    text.includes("zuschuss") ||
+    text.includes("antrag") ||
+    text.includes("frist") ||
+    text.includes("grant") ||
+    text.includes("funding")
+  );
+}
+
+function isWomenSport(item) {
+  const text = `${item.category || ""} ${item.title || ""} ${getSummary(item)} ${getRecommendation(item)}`.toLowerCase();
+
+  const women =
+    text.includes("frauen") ||
+    text.includes("frau") ||
+    text.includes("mädchen") ||
+    text.includes("maedchen") ||
+    text.includes("trainerin") ||
+    text.includes("trainerinnen");
+
+  const sport =
+    text.includes("sport") ||
+    text.includes("verein") ||
+    text.includes("trainer") ||
+    text.includes("übungsleiter") ||
+    text.includes("uebungsleiter");
+
+  return women && sport;
+}
+
+function buildNextStep(item) {
+  const text = `${item.category || ""} ${item.title || ""} ${getSummary(item)} ${getRecommendation(item)}`.toLowerCase();
+
+  if (text.includes("frist") || text.includes("deadline") || text.includes("antrag")) {
+    return "Frist, Antragsberechtigung und mögliche Projektidee sofort prüfen.";
+  }
+
+  if (isFunding(item)) {
+    return "Förderfähigkeit prüfen und passende Vereinsidee notieren.";
+  }
+
+  if (text.includes("augsburg")) {
+    return "Lokalen Ansprechpartner oder passende Stelle in Augsburg prüfen.";
+  }
+
+  if (text.includes("bayern") || text.includes("blsv")) {
+    return "BLSV-/Bayern-Bezug prüfen und für Vereinsstrategie vormerken.";
+  }
+
+  if (text.includes("trainerin") || text.includes("trainerinnen")) {
+    return "Als Ansatz für Trainerinnen-Gewinnung oder Mentoring prüfen.";
+  }
+
+  if (text.includes("mädchen") || text.includes("maedchen")) {
+    return "Als mögliche Projektidee für Mädchenbindung im Verein bewerten.";
+  }
+
+  if (text.includes("frauen")) {
+    return "Als Impuls für Frauenförderung, Sichtbarkeit oder Führung prüfen.";
+  }
+
+  return "Bei nächster Projekt- oder Vorstandsrunde kurz bewerten.";
+}
+
+function categoryMatches(item, selectedCategory) {
+  if (selectedCategory === "Alle") return true;
+
+  const category = safeText(item.category, "").toLowerCase();
+  const urgency = getUrgency(item).toLowerCase();
+  const text = `${item.title || ""} ${category} ${getSummary(item)} ${getRecommendation(item)}`.toLowerCase();
+
+  if (selectedCategory === "Sofort wichtig") {
+    return urgency.includes("sofort") || getScore(item) >= 90;
+  }
+
+  if (selectedCategory === "Fördermittel") return isFunding(item);
+  if (selectedCategory === "Augsburg") return text.includes("augsburg");
+  if (selectedCategory === "Bayern") return text.includes("bayern") || text.includes("blsv");
+  if (selectedCategory === "Frauen im Sport") return isWomenSport(item) || category.includes("frauen");
+  if (selectedCategory === "Mädchen im Sport") return text.includes("mädchen") || text.includes("maedchen");
+  if (selectedCategory === "Trainerinnen") return text.includes("trainerin") || text.includes("trainerinnen");
+  if (selectedCategory === "Gleichstellung") return text.includes("gleichstellung") || text.includes("geschlechtergerechtigkeit");
+  if (selectedCategory === "Schutz & Prävention") {
+    return text.includes("safe sport") || text.includes("gewaltschutz") || text.includes("prävention") || text.includes("praevention");
+  }
+  if (selectedCategory === "Inklusion") return text.includes("inklusion");
+  if (selectedCategory === "Integration") return text.includes("integration") || text.includes("migration");
+  if (selectedCategory === "Ehrenamt") return text.includes("ehrenamt") || text.includes("engagement");
+
+  return category.includes(selectedCategory.toLowerCase());
+}
+
+function ItemCard({ item, compact = false }) {
+  const score = getScore(item);
+  const source = getSource(item);
+  const url = getUrl(item);
+  const urgency = getUrgency(item);
+  const summary = getSummary(item);
+  const recommendation = getRecommendation(item);
+  const impact = getImpact(item);
+  const nextStep = buildNextStep(item);
+  const category = safeText(item.category || item.type, "Info");
+
+  return (
+    <article className={`item-card ${compact ? "compact" : ""}`}>
+      <div className="card-top">
+        <div className="card-title-block">
+          <div className="meta-line">
+            <span className="pill category-pill">{category}</span>
+            <span className={`pill urgency-pill urgency-${urgency.toLowerCase().replaceAll(" ", "-")}`}>
+              {urgency}
+            </span>
           </div>
-          {error && <p className="warning"><AlertTriangle size={16}/> Lokale Fallback-Daten aktiv. Fehler: {error}</p>}
+          <h3>{safeText(item.title || item.headline, "Ohne Titel")}</h3>
         </div>
-        <div className="briefingCard">
-          <div className="cardTitle"><BookOpen size={18}/> Wochenbriefing</div>
-          <h2>{briefing?.title || 'Wochenbriefing'}</h2>
-          <p>{briefing?.summary || 'Aktuelle Top-Themen werden nach dem nächsten Datenlauf angezeigt.'}</p>
-          <ul>
-            {(briefing?.topActions || []).slice(0, 3).map((action, idx) => <li key={idx}>{action}</li>)}
-          </ul>
-          <small>Generiert: {formatDate(briefing?.generatedAt)}</small>
+
+        <div className={`score-box ${getScoreClass(score)}`}>
+          <strong>{score}</strong>
+          <span>{getScoreLabel(score)}</span>
         </div>
-      </header>
+      </div>
 
-      <section className="stats">
-        <Stat icon={<TrendingUp/>} label="Treffer" value={stats.total}/>
-        <Stat icon={<CalendarDays/>} label="Fördermittel" value={stats.funding}/>
-        <Stat icon={<ShieldCheck/>} label="Hohe Priorität" value={stats.high}/>
-        <Stat icon={<Star/>} label="Favoriten" value={stats.favorites}/>
-      </section>
+      <div className="source-line">
+        <span>Quelle: {source}</span>
+        <span>Region: {safeText(item.region, "unbekannt")}</span>
+      </div>
 
-      <section className="filters">
-        <div className="searchBox"><Search size={18}/><input value={query} onChange={e => setQuery(e.target.value)} placeholder="Suche: Mädchen, Trainerinnen, Förderung, Bayern, Safe Sport ..." /></div>
-        <label><Filter size={16}/> Kategorie<select value={category} onChange={e => setCategory(e.target.value)}>{categories.map(c => <option key={c}>{c}</option>)}</select></label>
-        <label>Region<select value={region} onChange={e => setRegion(e.target.value)}>{regions.map(r => <option key={r}>{r}</option>)}</select></label>
-        <label>Score ab {minScore}<input type="range" min="0" max="100" value={minScore} onChange={e => setMinScore(Number(e.target.value))}/></label>
-      </section>
+      <div className="content-block">
+        <h4>Kurzfassung</h4>
+        <p>{summary}</p>
+      </div>
 
-      <main className="grid">
-        <section className="results">
-          <div className="sectionHead"><h2>Wichtige Treffer</h2><span>{loading ? 'Lade …' : `${filtered.length} angezeigt`}</span></div>
-          {filtered.length === 0 && <div className="empty">Keine Treffer für diese Filter. Score senken oder Suchbegriff ändern.</div>}
-          {filtered.map(item => (
-            <article className="itemCard" key={item.id}>
-              <div className="itemTop">
-                <div>
-                  <span className={`badge score${Math.floor((item.relevanceScore || 0)/10)*10}`}>{item.relevanceScore}/100 · {scoreLabel(item.relevanceScore || 0)}</span>
-                  <span className="badge neutral">{item.category}</span>
-                  <span className="badge neutral">{item.region}</span>
-                </div>
-                <button className={favorites.includes(item.id) ? 'fav active' : 'fav'} onClick={() => toggleFavorite(item.id)} aria-label="Favorit"><Star size={18}/></button>
-              </div>
-              <h3>{item.title}</h3>
-              <p className="summary">{item.summary}</p>
-              <div className="insight"><strong>Mehrwert:</strong> {item.impact || 'Einordnung noch offen.'}</div>
-              <div className="action"><Lightbulb size={17}/><strong>Empfohlene Aktion:</strong> {item.recommendedAction || 'Prüfen und intern bewerten.'}</div>
-              <div className="tags">{(item.tags || []).slice(0, 8).map(tag => <span key={tag}>{tag}</span>)}</div>
-              <div className="meta"><span>{formatDate(item.publishedAt)}</span><a href={item.sourceUrl} target="_blank" rel="noreferrer">Quelle öffnen <ExternalLink size={15}/></a></div>
-            </article>
-          ))}
-        </section>
-
-        <aside className="side">
-          <div className="panel">
-            <h2>Projektideen</h2>
-            <Project title="Mädchen bleiben im Verein" points={["Drop-out senken", "Trainerinnen als Vorbilder", "sichere Trainingszeiten", "Elternkommunikation"]}/>
-            <Project title="Frauen in Führung" points={["Mentoring", "Vorstands-Nachwuchs", "Qualifizierung", "Sichtbarkeit"]}/>
-            <Project title="Sport für Frauen mit wenig Zugang" points={["niedrige Hürden", "Kinderbetreuung", "Kooperation mit Stadt", "Integration & Gesundheit"]}/>
+      {!compact && (
+        <>
+          <div className="content-block">
+            <h4>Warum wichtig?</h4>
+            <p>{impact}</p>
           </div>
-          <div className="panel">
-            <h2>Kernquellen</h2>
-            <div className="sources">
-              {sources.map(source => <a key={source.url} href={source.url} target="_blank" rel="noreferrer"><strong>{source.name}</strong><small>{source.category} · {source.region}</small></a>)}
-            </div>
-          </div>
-        </aside>
-      </main>
 
-      <footer>
-        <strong>Hinweis:</strong> Diese App ersetzt keine Förderberatung. Sie ist ein Monitoring- und Briefing-Werkzeug. Förderbedingungen, Fristen und Antragsberechtigung immer bei der Originalquelle prüfen.
-      </footer>
+          <div className="content-block recommendation">
+            <h4>Empfehlung</h4>
+            <p>{recommendation}</p>
+          </div>
+
+          <div className="next-step">
+            <span className="next-step-icon">➜</span>
+            <span>{nextStep}</span>
+          </div>
+        </>
+      )}
+
+      <div className="card-footer">
+        <span>Aktualisiert: {formatDate(item.updatedAt || item.checkedAt || item.publishedAt)}</span>
+        {url ? (
+          <a href={url} target="_blank" rel="noreferrer" className="open-link">
+            Quelle öffnen ↗
+          </a>
+        ) : (
+          <span className="no-link">Kein Link vorhanden</span>
+        )}
+      </div>
+    </article>
+  );
+}
+
+function StatCard({ icon, label, value, hint }) {
+  return (
+    <div className="stat-card">
+      <div className="stat-icon">{icon}</div>
+      <div>
+        <strong>{value}</strong>
+        <span>{label}</span>
+        {hint && <small>{hint}</small>}
+      </div>
     </div>
   );
 }
 
-function Stat({ icon, label, value }) { return <div className="stat"><div>{React.cloneElement(icon, { size: 22 })}</div><strong>{value}</strong><span>{label}</span></div>; }
-function Project({ title, points }) { return <div className="project"><h3>{title}</h3><ul>{points.map(p => <li key={p}>{p}</li>)}</ul></div>; }
+function EmptyState() {
+  return (
+    <div className="empty-state">
+      <div className="empty-icon">!</div>
+      <h3>Keine Treffer gefunden</h3>
+      <p>
+        Passe Suche oder Kategorie an. Falls dauerhaft wenig erscheint, sollten weitere News- und
+        Förderquellen in <code>public/data/sources.json</code> ergänzt werden.
+      </p>
+    </div>
+  );
+}
 
-createRoot(document.getElementById('root')).render(<App />);
+function App() {
+  const [items, setItems] = useState([]);
+  const [briefing, setBriefing] = useState(null);
+  const [query, setQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("Alle");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  async function loadData() {
+    setLoading(true);
+    setError("");
+
+    try {
+      const [itemsResponse, briefingResponse] = await Promise.all([
+        fetch(DATA_URL, { cache: "no-store" }),
+        fetch(BRIEFING_URL, { cache: "no-store" })
+      ]);
+
+      if (!itemsResponse.ok) {
+        throw new Error("items.json konnte nicht geladen werden.");
+      }
+
+      const loadedItems = await itemsResponse.json();
+      let loadedBriefing = null;
+
+      if (briefingResponse.ok) {
+        loadedBriefing = await briefingResponse.json();
+      }
+
+      setItems(Array.isArray(loadedItems) ? loadedItems : []);
+      setBriefing(loadedBriefing);
+    } catch (err) {
+      setError(err.message || "Daten konnten nicht geladen werden.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const sortedItems = useMemo(() => {
+    return [...items].sort((a, b) => getScore(b) - getScore(a));
+  }, [items]);
+
+  const stats = useMemo(() => {
+    const top = sortedItems.filter((item) => getScore(item) >= 90).length;
+    const funding = sortedItems.filter(isFunding).length;
+    const womenSport = sortedItems.filter(isWomenSport).length;
+    const local = sortedItems.filter((item) => {
+      const text = `${item.title || ""} ${getSummary(item)} ${getRecommendation(item)}`.toLowerCase();
+      return text.includes("augsburg") || text.includes("bayern") || text.includes("blsv");
+    }).length;
+
+    return { top, funding, womenSport, local };
+  }, [sortedItems]);
+
+  const filteredItems = useMemo(() => {
+    const search = query.trim().toLowerCase();
+
+    return sortedItems.filter((item) => {
+      const haystack = [
+        item.title,
+        item.headline,
+        item.category,
+        item.region,
+        getSource(item),
+        getSummary(item),
+        getRecommendation(item),
+        getImpact(item),
+        ...(Array.isArray(item.keywords) ? item.keywords : [])
+      ]
+        .join(" ")
+        .toLowerCase();
+
+      const matchesSearch = !search || haystack.includes(search);
+      const matchesCategory = categoryMatches(item, selectedCategory);
+
+      return matchesSearch && matchesCategory;
+    });
+  }, [sortedItems, query, selectedCategory]);
+
+  const topItems = useMemo(() => {
+    return sortedItems
+      .filter((item) => getScore(item) >= 75)
+      .slice(0, 3);
+  }, [sortedItems]);
+
+  const fundingItems = useMemo(() => {
+    return sortedItems.filter(isFunding).slice(0, 4);
+  }, [sortedItems]);
+
+  const projectIdeas = briefing?.projectIdeas || [
+    {
+      title: "Mädchen bleiben im Verein",
+      goal: "Mädchen langfristig im Verein halten und Drop-out reduzieren.",
+      actions: ["Trainerinnen sichtbar machen", "sichere Trainingszeiten prüfen", "Elternkommunikation verbessern"]
+    },
+    {
+      title: "Trainerinnen gewinnen",
+      goal: "Mehr Frauen als Übungsleiterinnen und Trainerinnen gewinnen.",
+      actions: ["Ausbildungskosten prüfen", "Mentoring anbieten", "weibliche Vorbilder sichtbar machen"]
+    },
+    {
+      title: "Frauen in Führung",
+      goal: "Frauen stärker in Vorstand, Abteilungsleitung und Projektleitung bringen.",
+      actions: ["familienfreundliche Sitzungszeiten prüfen", "Qualifizierung anbieten", "Frauen gezielt für Gremien ansprechen"]
+    }
+  ];
+
+  return (
+    <div className="app-shell">
+      <header className="hero">
+        <div className="hero-content">
+          <div className="eyebrow">
+            <span>✦</span>
+            Frauen · Sport · Förderung · Augsburg/Bayern
+          </div>
+
+          <h1>FrauenSport Fördermonitor</h1>
+
+          <p>
+            Automatischer Monitor für Frauenförderung, Mädchen im Sport, Gleichstellung,
+            Fördermittel und Projektideen für Sportvereine.
+          </p>
+
+          <div className="hero-actions">
+            <button onClick={loadData} className="primary-button" disabled={loading}>
+              <span className={loading ? "spin" : ""}>⟳</span>
+              Daten neu laden
+            </button>
+
+            <a
+              className="secondary-button"
+              href="https://github.com/galgental9ps-png/frauen-sport-f-rdermonitor/actions"
+              target="_blank"
+              rel="noreferrer"
+            >
+              GitHub Actions öffnen ↗
+            </a>
+          </div>
+        </div>
+
+        <div className="hero-panel">
+          <h2>Für die Geschäftsführung</h2>
+          <p>
+            Fokus auf: Was ist wichtig? Welche Förderchance gibt es? Was kann der Verein daraus machen?
+          </p>
+          <div className="panel-note">
+            <span>✓</span>
+            Öffentliche Quellen, keine Logins, keine privaten Daten.
+          </div>
+        </div>
+      </header>
+
+      {error && (
+        <div className="error-box">
+          <span>!</span>
+          {error}
+        </div>
+      )}
+
+      <section className="stats-grid">
+        <StatCard
+          icon="↗"
+          value={items.length}
+          label="gefundene Einträge"
+          hint="aus öffentlichen Quellen"
+        />
+        <StatCard
+          icon="!"
+          value={stats.top}
+          label="Top-Priorität"
+          hint="Score ab 90"
+        />
+        <StatCard
+          icon="€"
+          value={stats.funding}
+          label="Fördermittel-Bezug"
+          hint="Zuschuss, Antrag, Frist"
+        />
+        <StatCard
+          icon="♀"
+          value={stats.womenSport}
+          label="Frauen/Mädchen + Sport"
+          hint="direkter Vereinsbezug"
+        />
+      </section>
+
+      <section className="briefing-section">
+        <div className="section-heading">
+          <div>
+            <span className="section-kicker">Briefing</span>
+            <h2>Was jetzt zuerst prüfen?</h2>
+          </div>
+          <span className="updated-label">
+            Aktualisiert: {formatDate(briefing?.updatedAt || items[0]?.updatedAt || items[0]?.checkedAt)}
+          </span>
+        </div>
+
+        {topItems.length > 0 ? (
+          <div className="top-grid">
+            {topItems.map((item) => (
+              <ItemCard key={item.id || getUrl(item)} item={item} compact />
+            ))}
+          </div>
+        ) : (
+          <EmptyState />
+        )}
+      </section>
+
+      {fundingItems.length > 0 && (
+        <section className="briefing-section">
+          <div className="section-heading">
+            <div>
+              <span className="section-kicker">Fördermittel-Radar</span>
+              <h2>Mögliche Zuschüsse, Programme und Fristen</h2>
+            </div>
+          </div>
+
+          <div className="top-grid">
+            {fundingItems.map((item) => (
+              <ItemCard key={`funding-${item.id || getUrl(item)}`} item={item} compact />
+            ))}
+          </div>
+        </section>
+      )}
+
+      <section className="controls-section">
+        <div className="search-box">
+          <span>⌕</span>
+          <input
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Suchen: Augsburg, Mädchen, Trainerinnen, Förderung, BLSV..."
+          />
+        </div>
+
+        <div className="filter-row">
+          <div className="filter-label">
+            <span>▾</span>
+            Kategorie
+          </div>
+
+          <div className="chips">
+            {CATEGORY_ORDER.map((category) => (
+              <button
+                key={category}
+                onClick={() => setSelectedCategory(category)}
+                className={selectedCategory === category ? "chip active" : "chip"}
+              >
+                {category}
+              </button>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <main className="main-grid">
+        <section className="results-section">
+          <div className="section-heading">
+            <div>
+              <span className="section-kicker">Dashboard</span>
+              <h2>{filteredItems.length} passende Treffer</h2>
+            </div>
+          </div>
+
+          {loading ? (
+            <div className="loading-box">
+              <span className="spin">⟳</span>
+              Daten werden geladen...
+            </div>
+          ) : filteredItems.length > 0 ? (
+            <div className="items-list">
+              {filteredItems.map((item) => (
+                <ItemCard key={item.id || getUrl(item)} item={item} />
+              ))}
+            </div>
+          ) : (
+            <EmptyState />
+          )}
+        </section>
+
+        <aside className="side-panel">
+          <section className="side-card">
+            <h3>Projektideen aus den Treffern</h3>
+            <p>
+              Diese Ideen passen zu Frauenförderung, Mädchen im Sport und Vereinsentwicklung.
+            </p>
+
+            <div className="idea-list">
+              {projectIdeas.slice(0, 5).map((idea, index) => (
+                <div className="idea-card" key={`${idea.title}-${index}`}>
+                  <h4>{idea.title}</h4>
+                  <p>{idea.goal || idea.description || "Projektidee für den Verein prüfen."}</p>
+                  <ul>
+                    {(idea.actions || idea.bullets || []).slice(0, 4).map((action, actionIndex) => (
+                      <li key={actionIndex}>{action}</li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <section className="side-card">
+            <h3>So liest man den Score</h3>
+            <div className="score-guide">
+              <div>
+                <strong>90–100</strong>
+                <span>Sofort prüfen</span>
+              </div>
+              <div>
+                <strong>75–89</strong>
+                <span>wichtig für Strategie oder Projekt</span>
+              </div>
+              <div>
+                <strong>55–74</strong>
+                <span>beobachten</span>
+              </div>
+              <div>
+                <strong>0–54</strong>
+                <span>Hintergrund</span>
+              </div>
+            </div>
+          </section>
+
+          <section className="side-card">
+            <h3>Nächster Qualitätscheck</h3>
+            <p>
+              Prüfe die Top 10. Wenn falsche Treffer oben stehen, müssen Keywords oder
+              Quellen in <code>sources.json</code> weiter geschärft werden.
+            </p>
+          </section>
+        </aside>
+      </main>
+    </div>
+  );
+}
+
+createRoot(document.getElementById("root")).render(<App />);

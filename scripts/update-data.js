@@ -4,8 +4,8 @@ const SOURCES_PATH = "public/data/sources.json";
 const ITEMS_PATH = "public/data/items.json";
 const BRIEFING_PATH = "public/data/briefing.json";
 
-const MAX_LINKS_PER_SOURCE = 6;
-const MAX_ITEMS_TOTAL = 140;
+const MAX_LINKS_PER_SOURCE = 8;
+const MAX_ITEMS_TOTAL = 120;
 const FETCH_TIMEOUT_MS = 12000;
 
 const WOMEN_TERMS = [
@@ -16,26 +16,26 @@ const WOMEN_TERMS = [
   "girls",
   "women",
   "weiblich",
-  "trainerin",
-  "trainerinnen",
-  "übungsleiterin",
-  "uebungsleiterin",
+  "frauensport",
+  "mädchensport",
+  "maedchensport",
+  "frauen im sport",
+  "mädchen im sport",
+  "maedchen im sport",
   "sportlerin",
   "sportlerinnen",
   "athletin",
   "athletinnen",
+  "trainerin",
+  "trainerinnen",
+  "übungsleiterin",
+  "uebungsleiterin",
   "vorständin",
   "vorständinnen",
-  "mentorinnen",
-  "mädchensport",
-  "maedchensport",
-  "frauensport",
-  "frauen im sport",
-  "mädchen im sport",
-  "maedchen im sport"
+  "mentorinnen"
 ];
 
-const SPORT_CLUB_TERMS = [
+const SPORT_TERMS = [
   "sport",
   "sportverein",
   "sportvereine",
@@ -87,7 +87,9 @@ const PRACTICE_TERMS = [
   "empfehlung",
   "tipps",
   "material",
-  "toolbox"
+  "toolbox",
+  "umsetzung",
+  "beispiel"
 ];
 
 const DEVELOPMENT_TERMS = [
@@ -113,7 +115,8 @@ const DEVELOPMENT_TERMS = [
   "engagement",
   "netzwerk",
   "kommunikation",
-  "ansprache"
+  "ansprache",
+  "beteiligung"
 ];
 
 const EQUALITY_TERMS = [
@@ -129,7 +132,8 @@ const EQUALITY_TERMS = [
   "rollenbilder",
   "stereotype",
   "gender",
-  "gleichstellung im sport"
+  "gleichstellung im sport",
+  "geschlechtergerechtigkeit im sport"
 ];
 
 const PROTECTION_TERMS = [
@@ -146,7 +150,9 @@ const PROTECTION_TERMS = [
   "ansprechperson",
   "beschwerde",
   "sicherheit",
-  "sicherer sport"
+  "sicherer sport",
+  "kinderschutz",
+  "jugendschutz"
 ];
 
 const INCLUSION_TERMS = [
@@ -161,7 +167,8 @@ const INCLUSION_TERMS = [
   "diversitaet",
   "interkulturell",
   "niedrigschwellig",
-  "sozial benachteiligt"
+  "sozial benachteiligt",
+  "zugang zum sport"
 ];
 
 const HEALTH_TERMS = [
@@ -199,18 +206,19 @@ const MONEY_TERMS = [
   "foerderung",
   "zuschuss",
   "zuwendung",
-  "geld",
   "finanzierung",
+  "geld",
   "antrag",
   "antragsfrist",
   "beantragen",
   "grant",
   "funding",
+  "tenders",
   "erasmus+",
   "cerv"
 ];
 
-const NEGATIVE_TERMS = [
+const HARD_BLOCK_TERMS = [
   "impressum",
   "datenschutz",
   "privacy",
@@ -242,7 +250,17 @@ const NEGATIVE_TERMS = [
   "warenkorb",
   "shop",
   "ticket",
-  "tickets"
+  "tickets",
+  "downloads",
+  "download",
+  "bestandserhebung",
+  "gesamtmitgliederzahl",
+  "mitgliedsorganisationen",
+  "service",
+  "termine",
+  "kalender",
+  "presse",
+  "mediathek"
 ];
 
 const LOW_RELEVANCE_TERMS = [
@@ -262,7 +280,63 @@ const LOW_RELEVANCE_TERMS = [
   "tabellenstand",
   "ergebnis",
   "live ticker",
-  "liveticker"
+  "liveticker",
+  "sportpolitik allgemein",
+  "sportdeutschland",
+  "bewerbung um olympische"
+];
+
+const GOOD_PATH_PARTS = [
+  "frauen",
+  "maedchen",
+  "mädchen",
+  "girls",
+  "women",
+  "gleichstellung",
+  "geschlechtergerechtigkeit",
+  "gender",
+  "safe-sport",
+  "safesport",
+  "schutz",
+  "praevention",
+  "prävention",
+  "teilhabe",
+  "inklusion",
+  "integration",
+  "sportjugend",
+  "vereinsentwicklung",
+  "ehrenamt",
+  "engagement",
+  "trainerinnen",
+  "trainerin"
+];
+
+const BAD_PATH_PARTS = [
+  "impressum",
+  "datenschutz",
+  "privacy",
+  "cookie",
+  "login",
+  "kontakt",
+  "newsletter",
+  "presse",
+  "jobs",
+  "karriere",
+  "shop",
+  "ticket",
+  "tickets",
+  "download",
+  "downloads",
+  "bestandserhebung",
+  "foerderung",
+  "foerderungen",
+  "förderung",
+  "förderungen",
+  "funding",
+  "tenders",
+  "olympiabewerbung",
+  "olympia",
+  "service"
 ];
 
 const PROJECT_IDEAS = [
@@ -380,17 +454,53 @@ function normalizeUrl(baseUrl, href) {
   }
 }
 
-function isAllowedUrl(url, sourceUrl) {
+function normalizeHost(hostname) {
+  return hostname.replace(/^www\./, "").toLowerCase();
+}
+
+function countHits(text, terms) {
+  const lower = String(text).toLowerCase();
+
+  return terms.reduce((count, term) => {
+    return lower.includes(String(term).toLowerCase()) ? count + 1 : count;
+  }, 0);
+}
+
+function hasAny(text, terms) {
+  return countHits(text, terms) > 0;
+}
+
+function isAllowedUrl(url, sourceUrl, source = {}) {
   try {
     const target = new URL(url);
-    const source = new URL(sourceUrl);
+    const base = new URL(sourceUrl);
 
     if (!["http:", "https:"].includes(target.protocol)) return false;
 
-    const targetHost = target.hostname.replace(/^www\./, "");
-    const sourceHost = source.hostname.replace(/^www\./, "");
+    const targetHost = normalizeHost(target.hostname);
+    const baseHost = normalizeHost(base.hostname);
 
-    return targetHost === sourceHost || targetHost.endsWith(`.${sourceHost}`);
+    const sameDomain = targetHost === baseHost || targetHost.endsWith(`.${baseHost}`);
+    if (!sameDomain) return false;
+
+    const path = decodeURIComponent(target.pathname.toLowerCase());
+
+    const sourceBlocked = source.blockedPathIncludes || [];
+    const sourceAllowed = source.allowedPathIncludes || [];
+
+    if (BAD_PATH_PARTS.some((part) => path.includes(part))) return false;
+
+    if (sourceBlocked.some((part) => path.includes(String(part).toLowerCase()))) {
+      return false;
+    }
+
+    if (sourceAllowed.length > 0) {
+      return sourceAllowed.some((part) => path.includes(String(part).toLowerCase()));
+    }
+
+    if (path === "/" || path.length < 3) return true;
+
+    return GOOD_PATH_PARTS.some((part) => path.includes(part));
   } catch {
     return false;
   }
@@ -461,6 +571,8 @@ function removeBoilerplate(text) {
       .replace(/Cookie[s]?/gi, " ")
       .replace(/Datenschutz/gi, " ")
       .replace(/Impressum/gi, " ")
+      .replace(/Pressekontakt/gi, " ")
+      .replace(/Teilen/gi, " ")
   );
 }
 
@@ -481,110 +593,131 @@ function splitSentences(text) {
     .filter((sentence) => sentence.length >= 45 && sentence.length <= 360);
 }
 
-function countHits(text, terms) {
-  const lower = text.toLowerCase();
+function getSignals(text) {
+  const lower = String(text).toLowerCase();
 
-  return terms.reduce((count, term) => {
-    return lower.includes(term.toLowerCase()) ? count + 1 : count;
-  }, 0);
+  return {
+    women: countHits(lower, WOMEN_TERMS),
+    sport: countHits(lower, SPORT_TERMS),
+    practice: countHits(lower, PRACTICE_TERMS),
+    development: countHits(lower, DEVELOPMENT_TERMS),
+    equality: countHits(lower, EQUALITY_TERMS),
+    protection: countHits(lower, PROTECTION_TERMS),
+    inclusion: countHits(lower, INCLUSION_TERMS),
+    health: countHits(lower, HEALTH_TERMS),
+    region: countHits(lower, REGION_TERMS),
+    money: countHits(lower, MONEY_TERMS),
+    hardBlock: countHits(lower, HARD_BLOCK_TERMS),
+    lowRelevance: countHits(lower, LOW_RELEVANCE_TERMS)
+  };
 }
 
-function hasAny(text, terms) {
-  return countHits(text, terms) > 0;
+function isClearlyRelevant(text) {
+  const s = getSignals(text);
+
+  const hasWomen = s.women > 0;
+  const hasSport = s.sport > 0;
+  const hasPractice = s.practice > 0;
+  const hasDevelopment = s.development > 0;
+  const hasEquality = s.equality > 0;
+  const hasProtection = s.protection > 0;
+  const hasInclusion = s.inclusion > 0;
+  const hasRegion = s.region > 0;
+
+  if (s.hardBlock > 0) return false;
+
+  if (hasWomen && hasSport) return true;
+  if (hasWomen && hasPractice) return true;
+  if (hasWomen && hasDevelopment) return true;
+  if (hasEquality && hasSport) return true;
+  if (hasProtection && (hasSport || hasWomen || hasEquality)) return true;
+  if (hasInclusion && hasWomen && hasSport) return true;
+  if (hasRegion && hasWomen && (hasSport || hasEquality || hasPractice)) return true;
+
+  return false;
 }
 
 function scoreText(text, source = {}) {
-  const lower = text.toLowerCase();
+  const lower = String(text).toLowerCase();
+  const s = getSignals(lower);
 
-  const womenHits = countHits(lower, WOMEN_TERMS);
-  const sportHits = countHits(lower, SPORT_CLUB_TERMS);
-  const practiceHits = countHits(lower, PRACTICE_TERMS);
-  const developmentHits = countHits(lower, DEVELOPMENT_TERMS);
-  const equalityHits = countHits(lower, EQUALITY_TERMS);
-  const protectionHits = countHits(lower, PROTECTION_TERMS);
-  const inclusionHits = countHits(lower, INCLUSION_TERMS);
-  const healthHits = countHits(lower, HEALTH_TERMS);
-  const regionHits = countHits(lower, REGION_TERMS);
-  const moneyHits = countHits(lower, MONEY_TERMS);
-  const negativeHits = countHits(lower, NEGATIVE_TERMS);
-  const lowRelevanceHits = countHits(lower, LOW_RELEVANCE_TERMS);
+  const hasWomen = s.women > 0;
+  const hasSport = s.sport > 0;
+  const hasPractice = s.practice > 0;
+  const hasDevelopment = s.development > 0;
+  const hasEquality = s.equality > 0;
+  const hasProtection = s.protection > 0;
+  const hasInclusion = s.inclusion > 0;
+  const hasHealth = s.health > 0;
+  const hasRegion = s.region > 0;
 
-  const hasWomen = womenHits > 0;
-  const hasSport = sportHits > 0;
-  const hasPractice = practiceHits > 0;
-  const hasDevelopment = developmentHits > 0;
-  const hasEquality = equalityHits > 0;
-  const hasProtection = protectionHits > 0;
-  const hasInclusion = inclusionHits > 0;
-  const hasHealth = healthHits > 0;
-  const hasRegion = regionHits > 0;
+  if (s.hardBlock > 0) return 0;
 
-  let score = 8;
+  let score = 0;
 
-  score += Math.min(Number(source.priority || 50), 100) * 0.18;
+  score += Math.min(Number(source.priority || source.weight || 50), 100) * 0.12;
 
-  score += womenHits * 12;
-  score += sportHits * 7;
-  score += practiceHits * 6;
-  score += developmentHits * 6;
-  score += equalityHits * 5;
-  score += protectionHits * 7;
-  score += inclusionHits * 4;
-  score += healthHits * 4;
-  score += regionHits * 6;
+  score += s.women * 13;
+  score += s.sport * 7;
+  score += s.practice * 7;
+  score += s.development * 7;
+  score += s.equality * 6;
+  score += s.protection * 9;
+  score += s.inclusion * 5;
+  score += s.health * 4;
+  score += s.region * 6;
 
-  if (hasWomen && hasSport) score += 20;
+  if (hasWomen && hasSport) score += 24;
   if (hasWomen && hasSport && hasPractice) score += 18;
-  if (hasWomen && hasSport && hasDevelopment) score += 16;
-  if (hasWomen && hasSport && hasEquality) score += 14;
-  if (hasWomen && hasSport && hasProtection) score += 16;
+  if (hasWomen && hasSport && hasDevelopment) score += 18;
+  if (hasWomen && hasSport && hasEquality) score += 15;
+  if (hasWomen && hasSport && hasProtection) score += 18;
   if (hasWomen && hasSport && hasRegion) score += 14;
   if (hasWomen && hasSport && hasInclusion) score += 10;
   if (hasWomen && hasSport && hasHealth) score += 8;
 
-  if (lower.includes("sportverein")) score += 12;
-  if (lower.includes("trainerinnen")) score += 14;
-  if (lower.includes("frauen in führung") || lower.includes("frauen in fuehrung")) score += 14;
-  if (lower.includes("mädchen im sport") || lower.includes("maedchen im sport")) score += 14;
-  if (lower.includes("frauen im sport")) score += 14;
-  if (lower.includes("safe sport")) score += 10;
-  if (lower.includes("schutzkonzept")) score += 10;
-  if (lower.includes("best practice") || lower.includes("praxisbeispiel")) score += 10;
+  if (lower.includes("sportverein")) score += 14;
+  if (lower.includes("trainerinnen")) score += 16;
+  if (lower.includes("frauen in führung") || lower.includes("frauen in fuehrung")) score += 16;
+  if (lower.includes("mädchen im sport") || lower.includes("maedchen im sport")) score += 16;
+  if (lower.includes("frauen im sport")) score += 16;
+  if (lower.includes("safe sport")) score += 12;
+  if (lower.includes("schutzkonzept")) score += 12;
+  if (lower.includes("best practice") || lower.includes("praxisbeispiel")) score += 12;
   if (lower.includes("augsburg")) score += 8;
   if (lower.includes("bayern") || lower.includes("blsv")) score += 7;
 
-  if (moneyHits > 0) score -= moneyHits * 5;
-  if (negativeHits > 0) score -= negativeHits * 22;
-  if (lowRelevanceHits > 0) score -= lowRelevanceHits * 14;
+  score -= s.money * 8;
+  score -= s.lowRelevance * 18;
 
-  if (lowRelevanceHits > 0 && !hasWomen && !hasEquality && !hasProtection) {
-    score -= 35;
+  if (s.lowRelevance > 0 && !hasWomen && !hasEquality && !hasProtection) {
+    score -= 40;
   }
 
   if (!hasWomen && !hasEquality && !hasProtection) {
-    score -= 25;
+    score -= 35;
   }
 
   if (!hasSport && !hasPractice && !hasDevelopment) {
-    score -= 16;
-  }
-
-  if (lower.includes("impressum") || lower.includes("datenschutz") || lower.includes("barrierefreiheitserklärung")) {
-    score = 0;
+    score -= 22;
   }
 
   const qualifiesForTop =
     (hasWomen && hasSport && (hasPractice || hasDevelopment || hasEquality || hasProtection || hasRegion)) ||
     (hasWomen && hasSport && lower.includes("trainerinnen")) ||
     (hasWomen && hasSport && lower.includes("sportverein")) ||
-    (hasWomen && hasSport && lower.includes("mädchen")) ||
-    (hasProtection && hasSport && hasWomen);
+    (hasWomen && hasSport && (lower.includes("mädchen") || lower.includes("maedchen"))) ||
+    (hasProtection && hasSport && (hasWomen || hasEquality));
 
-  if (!qualifiesForTop && score > 82) {
-    score = 82;
+  if (!qualifiesForTop && score > 78) {
+    score = 78;
   }
 
-  if (moneyHits > 0 && !hasWomen && !hasSport) {
+  if (s.money > 0 && !hasWomen && !hasSport) {
+    score = Math.min(score, 35);
+  }
+
+  if (!isClearlyRelevant(text)) {
     score = Math.min(score, 45);
   }
 
@@ -592,9 +725,26 @@ function scoreText(text, source = {}) {
 }
 
 function categoryFromText(text, source = {}) {
-  const lower = text.toLowerCase();
+  const lower = String(text).toLowerCase();
 
-  if (lower.includes("trainerin") || lower.includes("trainerinnen") || lower.includes("übungsleiterin") || lower.includes("uebungsleiterin")) {
+  if (
+    lower.includes("safe sport") ||
+    lower.includes("schutzkonzept") ||
+    lower.includes("gewaltschutz") ||
+    lower.includes("prävention") ||
+    lower.includes("praevention") ||
+    lower.includes("sexualisierte gewalt") ||
+    lower.includes("kinderschutz")
+  ) {
+    return "Schutz & Prävention";
+  }
+
+  if (
+    lower.includes("trainerin") ||
+    lower.includes("trainerinnen") ||
+    lower.includes("übungsleiterin") ||
+    lower.includes("uebungsleiterin")
+  ) {
     return "Trainerinnen";
   }
 
@@ -614,17 +764,11 @@ function categoryFromText(text, source = {}) {
   }
 
   if (
-    lower.includes("safe sport") ||
-    lower.includes("schutzkonzept") ||
-    lower.includes("gewaltschutz") ||
-    lower.includes("prävention") ||
-    lower.includes("praevention") ||
-    lower.includes("sexualisierte gewalt")
+    lower.includes("gleichstellung") ||
+    lower.includes("geschlechtergerechtigkeit") ||
+    lower.includes("chancengleichheit") ||
+    lower.includes("gleichberechtigung")
   ) {
-    return "Schutz & Prävention";
-  }
-
-  if (lower.includes("gleichstellung") || lower.includes("geschlechtergerechtigkeit") || lower.includes("chancengleichheit")) {
     return "Gleichstellung";
   }
 
@@ -644,7 +788,12 @@ function categoryFromText(text, source = {}) {
     return "Best Practice";
   }
 
-  if (lower.includes("vereinsentwicklung") || lower.includes("mitgliederbindung") || lower.includes("ehrenamt")) {
+  if (
+    lower.includes("vereinsentwicklung") ||
+    lower.includes("mitgliederbindung") ||
+    lower.includes("ehrenamt") ||
+    lower.includes("engagement")
+  ) {
     return "Vereinsentwicklung";
   }
 
@@ -652,22 +801,23 @@ function categoryFromText(text, source = {}) {
     return "Augsburg/Bayern";
   }
 
-  if (hasAny(lower, WOMEN_TERMS) && hasAny(lower, SPORT_CLUB_TERMS)) {
+  if (hasAny(lower, WOMEN_TERMS) && hasAny(lower, SPORT_TERMS)) {
     return "Frauen im Sport";
   }
 
-  return source.type || "Frauen im Sport";
+  return source.category || source.type || "Frauen im Sport";
 }
 
 function urgencyFromScore(score, text) {
-  const lower = text.toLowerCase();
+  const lower = String(text).toLowerCase();
 
   if (
     lower.includes("schutzkonzept") ||
     lower.includes("safe sport") ||
     lower.includes("sexualisierte gewalt") ||
     lower.includes("prävention") ||
-    lower.includes("praevention")
+    lower.includes("praevention") ||
+    lower.includes("kinderschutz")
   ) {
     return "Sofort prüfen";
   }
@@ -679,7 +829,7 @@ function urgencyFromScore(score, text) {
 }
 
 function createRecommendation(score, category, text) {
-  const lower = text.toLowerCase();
+  const lower = String(text).toLowerCase();
 
   if (category === "Schutz & Prävention") {
     return "Im Verein prüfen: Schutzkonzept, Ansprechpersonen, Beschwerdewege und Präventionsschulungen mit Blick auf Mädchen und Frauen weiterentwickeln.";
@@ -725,7 +875,7 @@ function createRecommendation(score, category, text) {
 }
 
 function createImpact(score, category, text) {
-  const lower = text.toLowerCase();
+  const lower = String(text).toLowerCase();
 
   if (category === "Trainerinnen") {
     return "Kann helfen, mehr weibliche Vorbilder, Übungsleiterinnen und Trainerinnen im Verein aufzubauen.";
@@ -762,13 +912,13 @@ function createImpact(score, category, text) {
   return "Nützlich als Hintergrund für spätere Projektideen oder Diskussionen im Verein.";
 }
 
-function createSummary(title, metaDescription, readableText, source) {
+function createSummary(title, metaDescription, readableText) {
   const sentences = splitSentences(readableText);
 
   const ranked = sentences
     .map((sentence) => ({
       sentence,
-      score: scoreText(`${title} ${sentence} ${(source.keywords || []).join(" ")}`, source)
+      score: scoreText(`${title} ${sentence}`)
     }))
     .sort((a, b) => b.score - a.score)
     .slice(0, 2)
@@ -780,10 +930,8 @@ function createSummary(title, metaDescription, readableText, source) {
     summary = metaDescription;
   } else if (ranked.length > 0) {
     summary = ranked.join(" ");
-  } else if (source.description) {
-    summary = source.description;
   } else {
-    summary = "Diese Quelle wurde als relevant für Frauen, Mädchen, Gleichstellung oder Vereinsentwicklung im Sport erkannt.";
+    summary = "Diese Quelle wurde als möglicher Impuls für Frauen, Mädchen, Gleichstellung oder Vereinsentwicklung im Sport erkannt.";
   }
 
   summary = cleanText(summary);
@@ -801,13 +949,14 @@ function extractLinks(html, baseUrl, source) {
     const url = normalizeUrl(baseUrl, rawHref);
 
     if (!url || !label || label.length < 8) continue;
-    if (!isAllowedUrl(url, baseUrl)) continue;
+    if (!isAllowedUrl(url, baseUrl, source)) continue;
 
-    const combined = `${label} ${url} ${(source.keywords || []).join(" ")}`;
-    const score = scoreText(combined, source);
+    const linkText = `${label} ${url}`;
+    if (!isClearlyRelevant(linkText)) continue;
 
-    if (score < 54) continue;
-    if (countHits(combined, NEGATIVE_TERMS) > 0) continue;
+    const score = scoreText(linkText, source);
+
+    if (score < 55) continue;
 
     links.push({
       title: cleanText(label).slice(0, 170),
@@ -838,7 +987,7 @@ async function fetchHtml(url) {
       signal: controller.signal,
       headers: {
         "User-Agent": "Mozilla/5.0 FrauenSport-Monitor/1.0",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,text/xml;q=0.8,*/*;q=0.5"
       }
     });
 
@@ -933,19 +1082,27 @@ function makeCompatibleItem({
 
 async function buildItem(source, url, fallbackTitle = null) {
   try {
+    if (!isAllowedUrl(url, source.url, source)) {
+      throw new Error("URL außerhalb erlaubter Bereiche");
+    }
+
     const html = await fetchHtml(url);
 
     const title = cleanText(extractTitle(html, fallbackTitle || source.name));
     const metaDescription = extractDescription(html);
     const readableText = extractReadableText(html);
 
-    const combined = `${title} ${metaDescription} ${readableText.slice(0, 2800)} ${(source.keywords || []).join(" ")}`;
+    const combinedForRelevance = `${title} ${metaDescription} ${readableText.slice(0, 3200)}`;
 
-    const score = scoreText(combined, source);
-    const category = categoryFromText(combined, source);
-    const summary = createSummary(title, metaDescription, readableText, source);
-    const recommendation = createRecommendation(score, category, combined);
-    const impact = createImpact(score, category, combined);
+    if (!isClearlyRelevant(combinedForRelevance)) {
+      throw new Error("Inhalt nicht ausreichend relevant für FrauenSport-Monitor");
+    }
+
+    const score = scoreText(combinedForRelevance, source);
+    const category = categoryFromText(combinedForRelevance, source);
+    const summary = createSummary(title, metaDescription, readableText);
+    const recommendation = createRecommendation(score, category, combinedForRelevance);
+    const impact = createImpact(score, category, combinedForRelevance);
 
     return makeCompatibleItem({
       title,
@@ -958,9 +1115,14 @@ async function buildItem(source, url, fallbackTitle = null) {
       impact
     });
   } catch (error) {
-    const combined = `${fallbackTitle || source.name} ${source.description || ""} ${(source.keywords || []).join(" ")}`;
-    const score = scoreText(combined, source);
-    const category = categoryFromText(combined, source);
+    const fallbackText = `${fallbackTitle || source.name} ${source.description || ""} ${(source.keywords || []).join(" ")}`;
+
+    if (!isClearlyRelevant(fallbackText)) {
+      return null;
+    }
+
+    const score = Math.min(scoreText(fallbackText, source), 58);
+    const category = categoryFromText(fallbackText, source);
     const title = fallbackTitle || source.name;
 
     return makeCompatibleItem({
@@ -971,37 +1133,75 @@ async function buildItem(source, url, fallbackTitle = null) {
       score,
       summary:
         source.description ||
-        "Diese Quelle konnte nicht vollständig automatisch gelesen werden. Sie bleibt im Monitor, weil sie fachlich relevant sein kann.",
+        "Diese Quelle konnte nicht vollständig automatisch gelesen werden. Sie bleibt nur als niedriger Beobachtungstreffer im Monitor.",
       recommendation:
-        "Quelle manuell öffnen und prüfen. Die Webseite blockiert eventuell automatische Abfragen oder liefert keine gut lesbaren Metadaten.",
+        "Quelle nur manuell prüfen, wenn das Thema wirklich zu Frauen, Mädchen oder Gleichstellung im Sportverein passt.",
       impact:
-        "Die Quelle kann trotzdem als Beobachtungsquelle für Frauen im Sport, Mädchenförderung oder Vereinsentwicklung wichtig sein.",
+        "Niedrige Priorität, da der automatische Inhalt nicht sicher genug bewertet werden konnte.",
       warning: error.message
     });
   }
 }
 
 function shouldKeepItem(item) {
+  if (!item) return false;
+
   const text = `${item.title} ${item.summary} ${item.recommendation} ${item.category}`.toLowerCase();
 
   if (!item.url || item.url.startsWith("javascript:")) return false;
-  if (countHits(text, NEGATIVE_TERMS) > 0) return false;
+  if (countHits(text, HARD_BLOCK_TERMS) > 0) return false;
 
-  const hasWomen = hasAny(text, WOMEN_TERMS);
-  const hasSport = hasAny(text, SPORT_CLUB_TERMS);
-  const hasPractice = hasAny(text, PRACTICE_TERMS);
-  const hasDevelopment = hasAny(text, DEVELOPMENT_TERMS);
-  const hasEquality = hasAny(text, EQUALITY_TERMS);
-  const hasProtection = hasAny(text, PROTECTION_TERMS);
+  const s = getSignals(text);
 
-  if (item.score >= 75) return true;
-  if (hasWomen && hasSport) return true;
-  if (hasWomen && hasPractice) return true;
-  if (hasWomen && hasDevelopment) return true;
-  if (hasEquality && hasSport) return true;
-  if (hasProtection && (hasSport || hasWomen)) return true;
+  const hasWomen = s.women > 0;
+  const hasSport = s.sport > 0;
+  const hasPractice = s.practice > 0;
+  const hasDevelopment = s.development > 0;
+  const hasEquality = s.equality > 0;
+  const hasProtection = s.protection > 0;
+  const hasInclusion = s.inclusion > 0;
+  const hasRegion = s.region > 0;
 
-  return item.score >= 55;
+  const onlyGeneralSport =
+    hasSport &&
+    !hasWomen &&
+    !hasEquality &&
+    !hasProtection &&
+    !hasInclusion;
+
+  const onlyMoney =
+    s.money > 0 &&
+    !hasWomen &&
+    !hasEquality &&
+    !hasProtection;
+
+  if (onlyGeneralSport) return false;
+  if (onlyMoney) return false;
+
+  const strongMatch =
+    hasWomen &&
+    hasSport &&
+    (hasPractice || hasDevelopment || hasEquality || hasProtection || hasRegion);
+
+  const protectionMatch =
+    hasProtection &&
+    (hasSport || hasWomen || hasEquality);
+
+  const equalitySportMatch =
+    hasEquality &&
+    hasSport;
+
+  const inclusionWomenSportMatch =
+    hasInclusion &&
+    hasWomen &&
+    hasSport;
+
+  if (strongMatch && item.score >= 60) return true;
+  if (protectionMatch && item.score >= 55) return true;
+  if (equalitySportMatch && item.score >= 58) return true;
+  if (inclusionWomenSportMatch && item.score >= 58) return true;
+
+  return item.score >= 72 && (hasWomen || hasEquality || hasProtection) && (hasSport || hasPractice || hasDevelopment);
 }
 
 async function main() {
@@ -1044,7 +1244,7 @@ async function main() {
   const unique = new Map();
 
   for (const item of items) {
-    if (!item.url || item.url.startsWith("javascript:")) continue;
+    if (!item?.url || item.url.startsWith("javascript:")) continue;
 
     const existing = unique.get(item.url);
 
@@ -1066,6 +1266,8 @@ async function main() {
       "Automatisch erzeugtes Briefing aus öffentlichen Quellen zu Frauen im Sport, Mädchenförderung, Trainerinnen, Gleichstellung, Schutz und Vereinsentwicklung.",
     focus:
       "Der Monitor sucht keine Fördermittel, sondern Praxisimpulse und Artikel, die helfen, Frauen und Mädchen im Sportverein besser zu fördern.",
+    qualityRule:
+      "Allgemeine Sportseiten, Fördermittel-Seiten, Service-Seiten, Downloads, Presse- und Kontaktseiten werden herausgefiltert.",
     highlights: topItems.map((item) => ({
       title: item.title,
       source: item.source,
@@ -1086,7 +1288,7 @@ async function main() {
   await fs.writeFile(ITEMS_PATH, JSON.stringify(sortedItems, null, 2), "utf8");
   await fs.writeFile(BRIEFING_PATH, JSON.stringify(briefing, null, 2), "utf8");
 
-  console.log(`Fertig. ${sortedItems.length} Dashboard-Einträge geschrieben.`);
+  console.log(`Fertig. ${sortedItems.length} passende FrauenSport-Einträge geschrieben.`);
 }
 
 main().catch((error) => {

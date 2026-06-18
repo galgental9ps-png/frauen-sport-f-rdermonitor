@@ -1,4 +1,4 @@
-name: Update data and deploy GitHub Pages
+      name: Update data and deploy GitHub Pages
 
 on:
   workflow_dispatch:
@@ -18,11 +18,18 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  update-data:
+  update-and-deploy:
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          ref: main
+          persist-credentials: true
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -32,33 +39,19 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Update data
+      - name: Update monitor data
         run: npm run update:data
 
       - name: Commit updated data
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: "Update monitor data"
+          file_pattern: public/data/*.json
 
-  deploy:
-    needs: update-data
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - name: Pull latest data after auto-commit
+        run: git pull --rebase origin main
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Build app
+      - name: Build app with latest data
         run: npm run build
 
       - name: Setup Pages

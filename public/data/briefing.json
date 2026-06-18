@@ -1,7 +1,8 @@
 {
-  "updatedAt": "2026-06-18T16:02:37.768Z",
-  "title": "Briefing Frauen, Sport & Förderung",
-  "intro": "Automatisch erzeugtes Briefing aus öffentlichen Quellen zu Frauenförderung, Frauensport, Gleichstellung, Fördermitteln und Vereinsentwicklung.",
+  "updatedAt": "2026-06-18T16:11:11.626Z",
+  "title": "Briefing FrauenSport Monitor",
+  "intro": "Automatisch erzeugtes Briefing aus öffentlichen Quellen zu Frauen im Sport, Mädchenförderung, Trainerinnen, Gleichstellung, Schutz und Vereinsentwicklung.",
+  "focus": "Der Monitor sucht keine Fördermittel, sondern Praxisimpulse und Artikel, die helfen, Frauen und Mädchen im Sportverein besser zu fördern.",
   "highlights": [
     {
       "title": "Geschlechtergerechtigkeit im Sport",
@@ -9,13 +10,27 @@
       "sourceName": "DOSB - Geschlechtergerechtigkeit",
       "sourceUrl": "https://www.dosb.de/themen/mensch-und-sportverein/geschlechtergerechtigkeit-im-sport",
       "url": "https://www.dosb.de/themen/mensch-und-sportverein/geschlechtergerechtigkeit-im-sport",
-      "category": "Fördermittel",
+      "category": "Frauen in Führung",
       "region": "Deutschland",
       "score": 100,
       "urgency": "Sehr wichtig",
-      "summary": "Um dieses Ziel zu erreichen, setzt sich der DOSB für die Förderung von Frauen*, die Beseitigung bestehender Diskriminierungen sowie die Öffnung des binären Geschlechtersystems ein. Mit Hilfe dieses Berichts versucht der DOSB, gezielte Maßnahmen zu entwickeln, um Barrieren abzubauen und die Chancengleichheit nachhaltig zu fördern.",
-      "recommendation": "Förderchance prüfen: Passt möglicherweise für Projekte zu Mädchen, Frauen, Teilhabe, Ehrenamt, Inklusion oder Sportverein.",
-      "impact": "Kann helfen, neue Projektmittel, Zuschüsse oder Förderchancen für den Verein zu finden."
+      "summary": "Geschlechtergerechtigkeit im Sport Jeder Mensch soll unabhängig der sexuellen und geschlechtlichen Identität und dem Geschlecht gleichberechtigt am Sport teilhaben können! Um dieses Ziel zu erreichen, setzt sich der DOSB für die Förderung von Frauen*, die Beseitigung bestehender Diskriminierungen sowie die Öffnung des binären Geschlechtersystems ein.",
+      "recommendation": "Im Vorstand besprechen: Wie können Frauen leichter Verantwortung übernehmen, welche Rollen sind machbar und welche Unterstützung brauchen sie?",
+      "impact": "Kann dazu beitragen, Frauen stärker in Verantwortung, Vorstand und Projektleitung zu bringen."
+    },
+    {
+      "title": "Bestandserhebung",
+      "source": "DOSB - Geschlechtergerechtigkeit",
+      "sourceName": "DOSB - Geschlechtergerechtigkeit",
+      "sourceUrl": "https://www.dosb.de/service/bestandserhebung",
+      "url": "https://www.dosb.de/service/bestandserhebung",
+      "category": "Frauen in Führung",
+      "region": "Deutschland",
+      "score": 100,
+      "urgency": "Sehr wichtig",
+      "summary": "Bestandserhebung Statistik der Gesamtmitgliederzahl des Deutschen Olympischen Sportbundes, der Landessportbünde, der Spitzenverbände und weiterer Mitgliedsorganisationen. Neu: Bestandserhebung 2025 Bestandserhebung 2024 Wir sind erstmals mehr als 29.000.000!",
+      "recommendation": "Im Vorstand besprechen: Wie können Frauen leichter Verantwortung übernehmen, welche Rollen sind machbar und welche Unterstützung brauchen sie?",
+      "impact": "Kann dazu beitragen, Frauen stärker in Verantwortung, Vorstand und Projektleitung zu bringen."
     },
     {
       "title": "Förderungen",
@@ -23,55 +38,69 @@
       "sourceName": "DOSB - Geschlechtergerechtigkeit",
       "sourceUrl": "https://www.dosb.de/service/foerderungen",
       "url": "https://www.dosb.de/service/foerderungen",
-      "category": "Fördermittel",
+      "category": "Frauen in Führung",
       "region": "Deutschland",
       "score": 100,
       "urgency": "Sehr wichtig",
-      "summary": "Förderungen Der DOSB fördert sowohl den Leistungssport als auch den Breitensport mit gezielten Programmen und Aktionen. Im Leistungssport liegt der Fokus auf der Talentförderung und der Sicherung internationaler Wettbewerbsfähigkeit.",
-      "recommendation": "Förderchance prüfen: Passt möglicherweise für Projekte zu Mädchen, Frauen, Teilhabe, Ehrenamt, Inklusion oder Sportverein.",
-      "impact": "Kann helfen, neue Projektmittel, Zuschüsse oder Förderchancen für den Verein zu finden."
+      "summary": "Förderungen Der DOSB fördert sowohl den Leistungssport als auch den Breitensport mit gezielten Programmen und Aktionen. Der Breitensport wird durch zahlreiche Projekte wie das Programm „ReStart - Sport bewegt Deutschland“ unterstützt.",
+      "recommendation": "Im Vorstand besprechen: Wie können Frauen leichter Verantwortung übernehmen, welche Rollen sind machbar und welche Unterstützung brauchen sie?",
+      "impact": "Kann dazu beitragen, Frauen stärker in Verantwortung, Vorstand und Projektleitung zu bringen."
     },
     {
-      "title": "Mensch und Sportverein",
+      "title": "Downloads",
       "source": "DOSB - Geschlechtergerechtigkeit",
       "sourceName": "DOSB - Geschlechtergerechtigkeit",
-      "sourceUrl": "https://www.dosb.de/themen/mensch-und-sportverein",
-      "url": "https://www.dosb.de/themen/mensch-und-sportverein",
-      "category": "Fördermittel",
+      "sourceUrl": "https://www.dosb.de/service/downloads",
+      "url": "https://www.dosb.de/service/downloads",
+      "category": "Frauen in Führung",
       "region": "Deutschland",
       "score": 100,
       "urgency": "Sehr wichtig",
-      "summary": "Sportvereine in Deutschland stärken nicht nur die Gesundheit, sondern fördern auch das menschliche Miteinander. Sie schaffen Orte der Vielfalt.",
-      "recommendation": "Förderchance prüfen: Passt möglicherweise für Projekte zu Mädchen, Frauen, Teilhabe, Ehrenamt, Inklusion oder Sportverein.",
-      "impact": "Kann helfen, neue Projektmittel, Zuschüsse oder Förderchancen für den Verein zu finden."
+      "summary": "Downloads Nachfolgend finden Sie die Links zu unseren wichtigsten Medien-Dateien. Im zweiten Block finden Sie alle Dokumente zu verschiedenen Themen des DOSB.",
+      "recommendation": "Im Vorstand besprechen: Wie können Frauen leichter Verantwortung übernehmen, welche Rollen sind machbar und welche Unterstützung brauchen sie?",
+      "impact": "Kann dazu beitragen, Frauen stärker in Verantwortung, Vorstand und Projektleitung zu bringen."
     },
     {
-      "title": "Breitensport und Gesundheit",
+      "title": "Publikationen",
       "source": "DOSB - Geschlechtergerechtigkeit",
       "sourceName": "DOSB - Geschlechtergerechtigkeit",
-      "sourceUrl": "https://www.dosb.de/themen/mensch-und-sportverein/breitensport-und-gesundheit",
-      "url": "https://www.dosb.de/themen/mensch-und-sportverein/breitensport-und-gesundheit",
-      "category": "Fördermittel",
-      "region": "Deutschland",
-      "score": 100,
-      "urgency": "Sofort prüfen",
-      "summary": "Breitensport und Gesundheit Mit ihren 29,3 Millionen Mitgliedschaften sind unsere Sportvereine wohl der größte Akteur für Gesundheitsförderung und Prävention in unserer Gesellschaft. Mit unserer Arbeit im DOSB machen wir den Breiten- und Gesundheitssport stark und engagieren uns für Lebensqualität und das psychosoziale Wohlbefinden unserer ganzen Gesellschaft.",
-      "recommendation": "Sofort prüfen: Förderfrist, Antragsberechtigung und mögliche Projektidee für den Verein klären.",
-      "impact": "Kann helfen, neue Projektmittel, Zuschüsse oder Förderchancen für den Verein zu finden."
-    },
-    {
-      "title": "Diversität und Teilhabe",
-      "source": "DOSB - Geschlechtergerechtigkeit",
-      "sourceName": "DOSB - Geschlechtergerechtigkeit",
-      "sourceUrl": "https://www.dosb.de/themen/mensch-und-sportverein/diversitaet-und-teilhabe",
-      "url": "https://www.dosb.de/themen/mensch-und-sportverein/diversitaet-und-teilhabe",
-      "category": "Fördermittel",
+      "sourceUrl": "https://www.dosb.de/service/publikationen",
+      "url": "https://www.dosb.de/service/publikationen",
+      "category": "Frauen in Führung",
       "region": "Deutschland",
       "score": 100,
       "urgency": "Sehr wichtig",
-      "summary": "Kein Raum für Diskriminierungen und Teilhabe für jeden Menschen. Dabei werden die Vielfaltsdimensionen Alter, geschlechtliche und sexuelle Identität, Nationalität oder Ethnie, Religion oder Weltanschauung, Behinderungen und/oder soziale Herkunft im DOSB (mehr und mehr) besonders berücksichtigt.",
-      "recommendation": "Förderchance prüfen: Passt möglicherweise für Projekte zu Mädchen, Frauen, Teilhabe, Ehrenamt, Inklusion oder Sportverein.",
-      "impact": "Kann helfen, neue Projektmittel, Zuschüsse oder Förderchancen für den Verein zu finden."
+      "summary": "Publikationen Der DOSB bietet vielfältige Publikationen - vom Sportentwicklungsbericht über das Magazin Leistungssport bis zu Strategiepapieren. Fundierte Informationen rund um den Sport, unsere Vereine und viele gesellschaftliche Themen gibt es hier auf einen Klick.",
+      "recommendation": "Im Vorstand besprechen: Wie können Frauen leichter Verantwortung übernehmen, welche Rollen sind machbar und welche Unterstützung brauchen sie?",
+      "impact": "Kann dazu beitragen, Frauen stärker in Verantwortung, Vorstand und Projektleitung zu bringen."
+    },
+    {
+      "title": "Recht, Steuern, Gema",
+      "source": "DOSB - Geschlechtergerechtigkeit",
+      "sourceName": "DOSB - Geschlechtergerechtigkeit",
+      "sourceUrl": "https://www.dosb.de/service/recht-steuern-gema",
+      "url": "https://www.dosb.de/service/recht-steuern-gema",
+      "category": "Frauen in Führung",
+      "region": "Deutschland",
+      "score": 100,
+      "urgency": "Sehr wichtig",
+      "summary": "Recht, Steuern, Gema Wissenswertes und praktische Arbeitshilfen zu den Themen Recht, Steuern und GEMA: GEMA-Broschüre \"(u.a. Der DOSB unterstützt seine Verbänden und Vereinen hierzu durch die Bereitstellung von kosten- und lizenzfreien Piktogrammen zu zahlreichen Sportarten.",
+      "recommendation": "Im Vorstand besprechen: Wie können Frauen leichter Verantwortung übernehmen, welche Rollen sind machbar und welche Unterstützung brauchen sie?",
+      "impact": "Kann dazu beitragen, Frauen stärker in Verantwortung, Vorstand und Projektleitung zu bringen."
+    },
+    {
+      "title": "Digitales und KI im Sport",
+      "source": "DOSB - Geschlechtergerechtigkeit",
+      "sourceName": "DOSB - Geschlechtergerechtigkeit",
+      "sourceUrl": "https://www.dosb.de/service/sportdeutschland-digital",
+      "url": "https://www.dosb.de/service/sportdeutschland-digital",
+      "category": "Frauen in Führung",
+      "region": "Deutschland",
+      "score": 100,
+      "urgency": "Sehr wichtig",
+      "summary": "Digitales und KI im Sport Der DOSB bietet seinen Mitgliedsorganisationen verschiedenste Services im Bereich Digitalisierung und KI. Zu den Services gehören neben der Unterstützung bei verschiedenen Projekten auch der Aufbau und die Pflege des Netzwerks SPORTDEUTSCHLAND Digital.",
+      "recommendation": "Im Vorstand besprechen: Wie können Frauen leichter Verantwortung übernehmen, welche Rollen sind machbar und welche Unterstützung brauchen sie?",
+      "impact": "Kann dazu beitragen, Frauen stärker in Verantwortung, Vorstand und Projektleitung zu bringen."
     },
     {
       "title": "Frauen im Sport - Wir sind mehr",
@@ -79,13 +108,13 @@
       "sourceName": "BLSV - Frauen im Sport",
       "sourceUrl": "https://www.blsv.de/startseite/produkte/sport-und-sozialangebote/frauen-im-sport/",
       "url": "https://www.blsv.de/startseite/produkte/sport-und-sozialangebote/frauen-im-sport/",
-      "category": "Bayern",
+      "category": "Mädchen im Sport",
       "region": "Bayern",
       "score": 100,
       "urgency": "Sehr wichtig",
       "summary": "Der Verbandsfrauenbeirat ist die Vertretung der Frauen im BLSV und ist verantwortlich für die Belange der Frauen im Sport in Bayern.",
-      "recommendation": "Für Bayern relevant: Als Grundlage für Vereinsentwicklung, BLSV-Bezug, Mädchenförderung oder Frauenförderung im Verein prüfen.",
-      "impact": "Wichtig für Sportvereine in Bayern und mögliche Maßnahmen über BLSV, Land oder Kommune."
+      "recommendation": "Als Maßnahme für Mädchenbindung prüfen: Bedürfnisse von Mädchen abfragen, sichere Trainingsumgebung schaffen und passende Angebote entwickeln.",
+      "impact": "Kann Mädchen im Verein stärken, Bindung verbessern und sichere Teilhabe fördern."
     },
     {
       "title": "Über uns: Informationen über den Bayerischen Landes-Sportverband",
@@ -93,13 +122,13 @@
       "sourceName": "BLSV - Frauen im Sport",
       "sourceUrl": "https://www.blsv.de/startseite/ueber-uns/",
       "url": "https://www.blsv.de/startseite/ueber-uns/",
-      "category": "Bayern",
+      "category": "Mädchen im Sport",
       "region": "Bayern",
       "score": 100,
       "urgency": "Sehr wichtig",
       "summary": "Der BLSV ist die Dachorganisation des organisierten Sports in Bayern. Auf dieser Seite können Sie sich über unseren Verband informieren.",
-      "recommendation": "Für Bayern relevant: Als Grundlage für Vereinsentwicklung, BLSV-Bezug, Mädchenförderung oder Frauenförderung im Verein prüfen.",
-      "impact": "Wichtig für Sportvereine in Bayern und mögliche Maßnahmen über BLSV, Land oder Kommune."
+      "recommendation": "Als Maßnahme für Mädchenbindung prüfen: Bedürfnisse von Mädchen abfragen, sichere Trainingsumgebung schaffen und passende Angebote entwickeln.",
+      "impact": "Kann Mädchen im Verein stärken, Bindung verbessern und sichere Teilhabe fördern."
     },
     {
       "title": "Online Übersicht: Amtliche Mitteilungen des BLSV und der BSJ",
@@ -107,41 +136,13 @@
       "sourceName": "BLSV - Frauen im Sport",
       "sourceUrl": "https://www.blsv.de/startseite/ueber-uns/amtliche-mitteilungen/",
       "url": "https://www.blsv.de/startseite/ueber-uns/amtliche-mitteilungen/",
-      "category": "Bayern",
+      "category": "Mädchen im Sport",
       "region": "Bayern",
       "score": 100,
       "urgency": "Sehr wichtig",
       "summary": "Informationen zu Mitgliedschaftsverhältnisse und wichtigen Gremien-, Beirats- und Ausschusssitzungen des BLSV und der BSJ.",
-      "recommendation": "Für Bayern relevant: Als Grundlage für Vereinsentwicklung, BLSV-Bezug, Mädchenförderung oder Frauenförderung im Verein prüfen.",
-      "impact": "Wichtig für Sportvereine in Bayern und mögliche Maßnahmen über BLSV, Land oder Kommune."
-    },
-    {
-      "title": "Übersicht der bayerischen Anschlussorganisationen im BLSV",
-      "source": "BLSV - Frauen im Sport",
-      "sourceName": "BLSV - Frauen im Sport",
-      "sourceUrl": "https://www.blsv.de/startseite/ueber-uns/anschlussorganisationen/",
-      "url": "https://www.blsv.de/startseite/ueber-uns/anschlussorganisationen/",
-      "category": "Fördermittel",
-      "region": "Bayern",
-      "score": 100,
-      "urgency": "Sehr wichtig",
-      "summary": "Anschlussorganisationen können die Einrichtungen des BLSV nutzen, erhalten Beratungsleistungen des BLSV und ggf. eine staatliche Förderung.",
-      "recommendation": "Förderchance prüfen: Passt möglicherweise für Projekte zu Mädchen, Frauen, Teilhabe, Ehrenamt, Inklusion oder Sportverein.",
-      "impact": "Kann helfen, neue Projektmittel, Zuschüsse oder Förderchancen für den Verein zu finden."
-    },
-    {
-      "title": "Über uns: Die Ausschüsse und Kommissionen im BLSV",
-      "source": "BLSV - Frauen im Sport",
-      "sourceName": "BLSV - Frauen im Sport",
-      "sourceUrl": "https://www.blsv.de/startseite/ueber-uns/ausschuesse-und-kommissionen/",
-      "url": "https://www.blsv.de/startseite/ueber-uns/ausschuesse-und-kommissionen/",
-      "category": "Fördermittel",
-      "region": "Bayern",
-      "score": 100,
-      "urgency": "Sehr wichtig",
-      "summary": "Die Ausschüsse und Kommissionen des BLSV setzten sich mit spezifischen Themen auseinander und entwickeln Zielvorgaben im BLSV.",
-      "recommendation": "Förderchance prüfen: Passt möglicherweise für Projekte zu Mädchen, Frauen, Teilhabe, Ehrenamt, Inklusion oder Sportverein.",
-      "impact": "Kann helfen, neue Projektmittel, Zuschüsse oder Förderchancen für den Verein zu finden."
+      "recommendation": "Als Maßnahme für Mädchenbindung prüfen: Bedürfnisse von Mädchen abfragen, sichere Trainingsumgebung schaffen und passende Angebote entwickeln.",
+      "impact": "Kann Mädchen im Verein stärken, Bindung verbessern und sichere Teilhabe fördern."
     }
   ],
   "projectIdeas": [
@@ -149,9 +150,9 @@
       "title": "Mädchen bleiben im Verein",
       "goal": "Mädchen langfristig im Verein halten und Drop-out reduzieren.",
       "actions": [
-        "Trainerinnen als Vorbilder sichtbar machen",
+        "Mädchen gezielt nach ihren Bedürfnissen fragen",
+        "Trainerinnen und weibliche Vorbilder sichtbar machen",
         "sichere Trainingszeiten und geschützte Räume prüfen",
-        "Mädchen gezielt nach Bedürfnissen befragen",
         "Elternkommunikation verbessern"
       ]
     },
@@ -159,10 +160,10 @@
       "title": "Trainerinnen gewinnen",
       "goal": "Mehr Frauen als Übungsleiterinnen, Trainerinnen und Betreuerinnen gewinnen.",
       "actions": [
-        "junge Frauen direkt ansprechen",
-        "Ausbildungskosten und Fördermöglichkeiten prüfen",
+        "junge Frauen im Verein direkt ansprechen",
         "Mentoring durch erfahrene Trainerinnen anbieten",
-        "weibliche Vorbilder öffentlich sichtbar machen"
+        "kleine Einstiegsrollen schaffen",
+        "Trainerinnen öffentlich sichtbar machen"
       ]
     },
     {
@@ -170,29 +171,29 @@
       "goal": "Frauen stärker in Vorstand, Abteilungsleitung und Projektleitung bringen.",
       "actions": [
         "familienfreundliche Sitzungszeiten prüfen",
-        "Qualifizierung und Coaching anbieten",
         "Frauen gezielt für Gremien ansprechen",
-        "Aufgaben in kleine, machbare Rollen aufteilen"
-      ]
-    },
-    {
-      "title": "Sport für Frauen mit wenig Zugang",
-      "goal": "Frauen erreichen, die bisher wenig Zugang zum Vereinssport haben.",
-      "actions": [
-        "niedrigschwellige Angebote schaffen",
-        "Kinderbetreuung oder familienfreundliche Zeiten prüfen",
-        "Kooperationen mit Stadt, Schulen und sozialen Trägern starten",
-        "Integration, Gesundheit und Teilhabe verbinden"
+        "Aufgaben in kleine Rollen aufteilen",
+        "Führungstandem oder Mentoring einführen"
       ]
     },
     {
       "title": "Sicherer Sport für Mädchen und Frauen",
-      "goal": "Schutz, Prävention und Vertrauen im Verein stärken.",
+      "goal": "Schutz, Vertrauen und Prävention im Verein stärken.",
       "actions": [
         "Schutzkonzept prüfen oder erstellen",
         "Ansprechpersonen sichtbar machen",
         "Safe-Sport-Schulungen anbieten",
-        "Diskriminierung und Gewaltprävention aktiv behandeln"
+        "Beschwerdewege klar kommunizieren"
+      ]
+    },
+    {
+      "title": "Sichtbarkeit von Frauen im Verein",
+      "goal": "Sportlerinnen, Trainerinnen und Ehrenamtliche sichtbarer machen.",
+      "actions": [
+        "Frauen regelmäßig auf Webseite und Social Media zeigen",
+        "Erfolgsgeschichten erzählen",
+        "weibliche Vorbilder bei Veranstaltungen einbinden",
+        "Sprache und Bilder im Verein prüfen"
       ]
     }
   ]

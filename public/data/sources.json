@@ -1,57 +1,69 @@
 [
   {
-    "name": "DOSB - Geschlechtergerechtigkeit",
+    "name": "DOSB - Geschlechtergerechtigkeit im Sport",
     "type": "website",
-    "category": "Sport & Gleichstellung",
+    "category": "Gleichstellung",
     "region": "Deutschland",
     "url": "https://www.dosb.de/themen/mensch-und-sportverein/geschlechtergerechtigkeit-im-sport",
-    "weight": 9,
-    "keywords": ["Geschlechtergerechtigkeit", "Frauen", "Sport", "Führung", "Verein"]
+    "priority": 9,
+    "keywords": ["Geschlechtergerechtigkeit", "Frauen im Sport", "Gleichstellung", "Sportverein"],
+    "allowedPathIncludes": ["/themen/mensch-und-sportverein/", "/themen/gleichstellung", "/themen/integration-und-inklusion"],
+    "blockedPathIncludes": ["/service/bestandserhebung", "/service/foerderungen", "/service/downloads", "/service/termine", "/olympiabewerbung"]
   },
   {
     "name": "BLSV - Frauen im Sport",
     "type": "website",
-    "category": "Sport & Gleichstellung",
+    "category": "Frauen im Sport",
     "region": "Bayern",
     "url": "https://www.blsv.de/startseite/produkte/sport-und-sozialangebote/frauen-im-sport/",
-    "weight": 10,
-    "keywords": ["Frauen im Sport", "Bayern", "Verein", "Mädchen", "Engagement"]
+    "priority": 10,
+    "keywords": ["Frauen im Sport", "Bayern", "Sportverein", "Mädchen", "Engagement"],
+    "allowedPathIncludes": ["/frauen-im-sport", "/sport-und-sozialangebote", "/sportjugend", "/ehrenamt"],
+    "blockedPathIncludes": ["/shop", "/tickets", "/mitgliedschaft", "/downloads"]
   },
   {
-    "name": "BMFSFJ - Gleichstellung",
+    "name": "Deutsche Sportjugend - Vielfalt und Teilhabe",
     "type": "website",
-    "category": "Gleichstellungspolitik",
+    "category": "Mädchen im Sport",
     "region": "Deutschland",
-    "url": "https://www.bmfsfj.de/bmfsfj/themen/gleichstellung",
-    "weight": 8,
-    "keywords": ["Gleichstellung", "Frauen", "Teilhabe", "Förderung"]
+    "url": "https://www.dsj.de/themen",
+    "priority": 8,
+    "keywords": ["Mädchen", "Jugend", "Sport", "Teilhabe", "Schutz"],
+    "allowedPathIncludes": ["/themen", "/news", "/publikationen"],
+    "blockedPathIncludes": ["/shop", "/kontakt", "/newsletter"]
   },
   {
-    "name": "Förderdatenbank des Bundes",
+    "name": "Safe Sport",
     "type": "website",
-    "category": "Fördermittel",
-    "region": "Deutschland/EU",
-    "url": "https://www.foerderdatenbank.de/",
-    "weight": 10,
-    "keywords": ["Förderprogramm", "Zuschuss", "Frauenförderung", "Sport", "Verein"]
-  },
-  {
-    "name": "EU Funding & Tenders Portal",
-    "type": "website",
-    "category": "EU-Förderung",
-    "region": "EU",
-    "url": "https://ec.europa.eu/info/funding-tenders/opportunities/portal/screen/home",
-    "weight": 7,
-    "keywords": ["CERV", "Erasmus+", "Gender Equality", "Sport", "Funding"]
+    "category": "Schutz & Prävention",
+    "region": "Deutschland",
+    "url": "https://www.ansprechstelle-safe-sport.de/",
+    "priority": 9,
+    "keywords": ["Safe Sport", "Schutz", "Prävention", "sexualisierte Gewalt", "Sport"],
+    "allowedPathIncludes": ["/"],
+    "blockedPathIncludes": ["/impressum", "/datenschutz", "/kontakt"]
   },
   {
     "name": "Stadt Augsburg - Gleichstellung",
     "type": "website",
-    "category": "Lokal",
+    "category": "Augsburg",
     "region": "Augsburg",
-    "url": "https://www.augsburg.de/",
-    "weight": 9,
-    "keywords": ["Augsburg", "Gleichstellung", "Frauen", "Sport", "Förderung"]
+    "url": "https://www.augsburg.de/buergerservice-rathaus/gleichstellung",
+    "priority": 8,
+    "keywords": ["Augsburg", "Gleichstellung", "Frauen", "Teilhabe"],
+    "allowedPathIncludes": ["/gleichstellung", "/frauen", "/sport"],
+    "blockedPathIncludes": ["/impressum", "/datenschutz", "/kontakt", "/presse"]
+  },
+  {
+    "name": "BMFSFJ - Gleichstellung",
+    "type": "website",
+    "category": "Gleichstellung",
+    "region": "Deutschland",
+    "url": "https://www.bmfsfj.de/bmfsfj/themen/gleichstellung",
+    "priority": 6,
+    "keywords": ["Gleichstellung", "Frauen", "Teilhabe", "Diskriminierung"],
+    "allowedPathIncludes": ["/themen/gleichstellung", "/aktuelles"],
+    "blockedPathIncludes": ["/ministerium", "/presse", "/service", "/kontakt"]
   },
   {
     "name": "Bayerisches Sozialministerium - Gleichstellung",
@@ -59,16 +71,9 @@
     "category": "Bayern",
     "region": "Bayern",
     "url": "https://www.stmas.bayern.de/gleichstellung/",
-    "weight": 8,
-    "keywords": ["Bayern", "Gleichstellung", "Frauen", "Förderung"]
-  },
-  {
-    "name": "Erasmus+ Sport",
-    "type": "website",
-    "category": "EU-Förderung",
-    "region": "EU",
-    "url": "https://erasmus-plus.ec.europa.eu/opportunities/opportunities-for-organisations/sport-actions",
-    "weight": 7,
-    "keywords": ["Erasmus+", "Sport", "Verein", "Förderung", "Inklusion"]
+    "priority": 6,
+    "keywords": ["Bayern", "Gleichstellung", "Frauen", "Teilhabe"],
+    "allowedPathIncludes": ["/gleichstellung"],
+    "blockedPathIncludes": ["/ministerium", "/presse", "/service", "/kontakt"]
   }
 ]
